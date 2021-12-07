@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<launch>
+  <arg name="robot_ip" default="172.16.0.2"/>
+  <arg name="load_gripper" default="true" />
+  <arg name="use_interactive_marker" default="true" />
+  <arg name="use_gripper_gui" default="true" />
+
+  <include file="$(find franka_control)/launch/franka_control.launch" >
+    <arg name="robot_ip" value="$(arg robot_ip)" />
+    <arg name="load_gripper" value="$(arg load_gripper)" />
+  </include>
+
+  <!-- Loads controller parameters -->  
+  <rosparam command="load" file="$(find franka_interactive_controllers)/config/franka_interactive_controllers.yaml" />
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="cartesian_impedance_controller_pose_command"/>
+
+  <!-- Convert franka state of EE to Geometry Message PoseStamped!! -->  
+  <node name="franka_to_geometry_messages" pkg="franka_interactive_controllers" type="franka_to_geometry_messages.py" respawn="false" output="screen"/>
+
+  <!-- Use interactive marker to define desired pose for impedance (stiffness + damping compensation) controller -->  
+  <node if="$(arg use_interactive_marker)" pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_interactive_controllers)/launch/rviz/franka_description_with_marker.rviz"/>
+
+  <node if="$(arg use_interactive_marker)" name="interactive_marker" pkg="franka_interactive_controllers" type="interactive_marker.py" required="true" output="screen">
+    <param name="link_name" value="panda_link0" />
+    <remap from="desired_pose" to="/cartesian_impedance_controller_pose_command/desired_pose" />
+  </node>
+
+  <!-- Bring up rqt_reconfigure to modify values -->
+  <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" required="false" />
+</launch>
