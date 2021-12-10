@@ -111,10 +111,9 @@ bool CartesianImpedancePoseController::init(hardware_interface::RobotHW* robot_h
   // Parameters for goto_home at initialization!!
   _goto_home = false;
 
-  // Parameters for jointDS controller
+  // Parameters for jointDS controller (THIS SHOULD BE IN ANOTHER SCRIPT!! DS MOTION GENERATOR?)
   q_home_ << 0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4;
   jointDS_epsilon_ = 0.05;
-
   A_jointDS_home_ = Eigen::MatrixXd::Identity(7, 7);
   A_jointDS_home_(0,0) = 10; A_jointDS_home_(1,1) = 10; A_jointDS_home_(2,2) = 10;
   A_jointDS_home_(3,3) = 10; A_jointDS_home_(4,4) = 15; A_jointDS_home_(5,5) = 15;
@@ -122,23 +121,30 @@ bool CartesianImpedancePoseController::init(hardware_interface::RobotHW* robot_h
   ROS_INFO_STREAM("A (jointDS): " << std::endl <<  A_jointDS_home_);
 
   // Parameters for joint PD controller
+  // Ideal gains for Joint Impedance Controller
+  // k_gains: 600.0, 600.0, 600.0, 600.0, 250.0, 150.0, 50.0
+  // d_gains: 50.0, 50.0, 50.0, 20.0, 20.0, 20.0, 10.0
+
+  // Gains for P error stiffness term
   k_joint_gains_ = Eigen::MatrixXd::Identity(7, 7);
   k_joint_gains_(0,0) = 500; k_joint_gains_(1,1) = 500; k_joint_gains_(2,2) = 500;
   k_joint_gains_(3,3) = 500; k_joint_gains_(4,4) = 500; k_joint_gains_(5,5) = 500;
   k_joint_gains_(6,6) = 200;
   ROS_INFO_STREAM("K (joint stiffness): " << std::endl <<  k_joint_gains_);
 
+  // Gains for D error damping term
   d_joint_gains_ = Eigen::MatrixXd::Identity(7, 7);
   ROS_INFO_STREAM("D (joint damping): " << std::endl << d_joint_gains_);
   d_joint_gains_(0,0) = 5; d_joint_gains_(1,1) = 5; d_joint_gains_(2,2) = 5;
   d_joint_gains_(3,3) = 2; d_joint_gains_(4,4) = 2; d_joint_gains_(5,5) = 2;
   d_joint_gains_(6,6) = 1;
 
-  // Ideal gains for Joint Impedance Controller
-  // k_gains: 600.0, 600.0, 600.0, 600.0, 250.0, 150.0, 50.0
-  // d_gains: 50.0, 50.0, 50.0, 20.0, 20.0, 20.0, 10.0
+  // Gains for feed-forward damping term
+  d_ff_joint_gains_ = Eigen::MatrixXd::Identity(7, 7);
 
   tool_compensation_force_.setZero();
+  tool_compensation_force_ << 0.46, -0.17, -1.64, 0, 0, 0;
+
   return true;
 }
 
@@ -189,26 +195,30 @@ void CartesianImpedancePoseController::update(const ros::Time& /*time*/,
 
   // compute control
   // allocate variables
-  Eigen::VectorXd tau_task(7), tau_nullspace(7), tau_d(7);
+  Eigen::VectorXd tau_task(7), tau_nullspace(7), tau_d(7), tau_tool(7);
+
   if (_goto_home){    
     ROS_INFO_STREAM ("Moving robot to home joint configuration.");            
     
     // Variables to control robot in joint space 
-    Eigen::VectorXd q_error(7), dq_desired(7), q_desired(7), q_delta(7);
+    Eigen::VectorXd q_error(7), dq_desired(7), dq_filtered(7), q_desired(7), q_delta(7);
     double dt = 0.001;
 
     // Compute linear DS in joint-space
     q_error = q - q_home_;
-
     dq_desired = -A_jointDS_home_ * q_error;
 
+    // Filter desired velocity to avoid high accelerations!
+    double dq_filter_params_  = 0.5555;
+    dq_filtered = (1-dq_filter_params_)*dq + dq_filter_params_*dq_desired;
+
     ROS_INFO_STREAM ("Joint position error:" << q_error.norm());
-    // ROS_INFO_STREAM ("q_vel = -A(q-q_home):" << dq_desired << std::endl);
-    
+    ROS_INFO_STREAM ("dq_desired:" << std::endl << dq_desired);
+    ROS_INFO_STREAM ("dq_filtered:" << std::endl << dq_filtered);
+
     // Integrate to get desired position
     q_desired = q + dq_desired*dt;
     q_delta   = q - q_desired;
-    // ROS_INFO_STREAM ("q_delta:" << std::endl << q_delta);      
 
     // Desired torque: Joint PD control with damping ratio = 1
     // tau_task << -k_joint_gains_*q_delta - d_joint_gains_*dq;
@@ -248,9 +258,7 @@ void CartesianImpedancePoseController::update(const ros::Time& /*time*/,
     error.tail(3) << -transform.linear() * error.tail(3);
 
     // Cartesian PD control with damping ratio = 1
-    // tau_task << jacobian.transpose() *(-cartesian_stiffness_ * error - cartesian_damping_ * (jacobian * dq) - tool_compensation_force_);
     tau_task << jacobian.transpose() *(-cartesian_stiffness_ * error - cartesian_damping_ * (jacobian * dq));
-    tau_task.setZero();
   }
 
   // pseudoinverse for nullspace handling
@@ -264,9 +272,12 @@ void CartesianImpedancePoseController::update(const ros::Time& /*time*/,
                        (nullspace_stiffness_ * (q_d_nullspace_ - q) -
                         (2.0 * sqrt(nullspace_stiffness_)) * dq);
 
+  // Compute tool compensation (scoop/camera in scooping task)
+  tau_tool << jacobian.transpose() * tool_compensation_force_;
+
   // Desired torque
-  tau_d << tau_task + tau_nullspace + coriolis;
-  tau_d.setZero();
+  tau_d << tau_task + tau_nullspace + coriolis - tau_tool;
+  // tau_d.setZero();
 
   // Saturate torque rate to avoid discontinuities
   tau_d << saturateTorqueRate(tau_d, tau_J_d);
@@ -309,6 +320,7 @@ void CartesianImpedancePoseController::complianceParamCallback(
   cartesian_stiffness_target_.bottomRightCorner(3, 3)
       << config.rotational_stiffness * Eigen::Matrix3d::Identity();
   cartesian_damping_target_.setIdentity();
+  
   // Damping ratio = 1
   cartesian_damping_target_.topLeftCorner(3, 3)
       << 2.0 * sqrt(config.translational_stiffness) * Eigen::Matrix3d::Identity();

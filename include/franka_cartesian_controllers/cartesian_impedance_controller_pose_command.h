@@ -61,7 +61,7 @@ class CartesianImpedancePoseController : public controller_interface::MultiInter
   Eigen::Matrix<double, 7, 7> A_jointDS_home_;
   Eigen::Matrix<double, 7, 7> k_joint_gains_;
   Eigen::Matrix<double, 7, 7> d_joint_gains_;
-  Eigen::Matrix<double, 7, 1> tau_ext_initial_;
+  Eigen::Matrix<double, 7, 7> d_ff_joint_gains_;
   Eigen::Matrix<double, 6, 1> tool_compensation_force_;
 
   // Dynamic reconfigure
