@@ -13,14 +13,13 @@
 #include <ros/node_handle.h>
 #include <ros/time.h>
 
-#include <franka_example_controllers/JointTorqueComparison.h>
 #include <franka_hw/franka_cartesian_command_interface.h>
 #include <franka_hw/franka_model_interface.h>
 #include <franka_hw/trigger_rate.h>
 
-namespace franka_example_controllers {
+namespace franka_interactive_controllers {
 
-class JointImpedanceExampleController : public controller_interface::MultiInterfaceController<
+class JointImpedanceFrankaController : public controller_interface::MultiInterfaceController<
                                             franka_hw::FrankaModelInterface,
                                             hardware_interface::EffortJointInterface,
                                             franka_hw::FrankaPoseCartesianInterface> {
@@ -54,7 +53,6 @@ class JointImpedanceExampleController : public controller_interface::MultiInterf
 
   franka_hw::TriggerRate rate_trigger_{1.0};
   std::array<double, 7> last_tau_d_{};
-  realtime_tools::RealtimePublisher<JointTorqueComparison> torques_publisher_;
 };
 
-}  // namespace franka_example_controllers
+}  // namespace franka_interactive_controllers

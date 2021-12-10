@@ -54,7 +54,14 @@ class CartesianImpedancePoseController : public controller_interface::MultiInter
   Eigen::Vector3d position_d_target_;
   Eigen::Quaterniond orientation_d_target_;
 
-  // To compensate for extra weight on the tool
+  // Variables for initialization and tool compensation
+  bool _goto_home;
+  double jointDS_epsilon_;
+  Eigen::Matrix<double, 7, 1> q_home_;
+  Eigen::Matrix<double, 7, 7> A_jointDS_home_;
+  Eigen::Matrix<double, 7, 7> k_joint_gains_;
+  Eigen::Matrix<double, 7, 7> d_joint_gains_;
+  Eigen::Matrix<double, 7, 1> tau_ext_initial_;
   Eigen::Matrix<double, 6, 1> tool_compensation_force_;
 
   // Dynamic reconfigure

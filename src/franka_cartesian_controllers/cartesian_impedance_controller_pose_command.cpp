@@ -10,8 +10,9 @@
 #include <pluginlib/class_list_macros.h>
 #include <ros/ros.h>
 
-// #include <franka_interactive_controllers/pseudo_inversion.h>
 #include <pseudo_inversion.h>
+#include <controllers_common.h>
+#include <hardware_interface/joint_command_interface.h>
 
 namespace franka_interactive_controllers {
 
@@ -24,6 +25,7 @@ bool CartesianImpedancePoseController::init(hardware_interface::RobotHW* robot_h
       "desired_pose", 20, &CartesianImpedancePoseController::desiredPoseCallback, this,
       ros::TransportHints().reliable().tcpNoDelay());
 
+  // Getting ROSParams
   std::string arm_id;
   if (!node_handle.getParam("arm_id", arm_id)) {
     ROS_ERROR_STREAM("CartesianImpedancePoseController: Could not read parameter arm_id");
@@ -37,6 +39,7 @@ bool CartesianImpedancePoseController::init(hardware_interface::RobotHW* robot_h
     return false;
   }
 
+  // Getting libranka control interfaces
   auto* model_interface = robot_hw->get<franka_hw::FrankaModelInterface>();
   if (model_interface == nullptr) {
     ROS_ERROR_STREAM(
@@ -85,6 +88,7 @@ bool CartesianImpedancePoseController::init(hardware_interface::RobotHW* robot_h
     }
   }
 
+  // Getting Dynamic Reconfigure objects
   dynamic_reconfigure_compliance_param_node_ =
       ros::NodeHandle(node_handle.getNamespace() + "dynamic_reconfigure_compliance_param_node");
 
@@ -95,42 +99,67 @@ bool CartesianImpedancePoseController::init(hardware_interface::RobotHW* robot_h
   dynamic_server_compliance_param_->setCallback(
       boost::bind(&CartesianImpedancePoseController::complianceParamCallback, this, _1, _2));
 
+
+  // Initializing variables
   position_d_.setZero();
   orientation_d_.coeffs() << 0.0, 0.0, 0.0, 1.0;
   position_d_target_.setZero();
   orientation_d_target_.coeffs() << 0.0, 0.0, 0.0, 1.0;
-
   cartesian_stiffness_.setZero();
   cartesian_damping_.setZero();
 
-  // Get values for force tool compensation
+  // Parameters for goto_home at initialization!!
+  _goto_home = false;
 
-  // TODO: READ FROM F_Ext!
+  // Parameters for jointDS controller
+  q_home_ << 0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4;
+  jointDS_epsilon_ = 0.05;
+
+  A_jointDS_home_ = Eigen::MatrixXd::Identity(7, 7);
+  A_jointDS_home_(0,0) = 10; A_jointDS_home_(1,1) = 10; A_jointDS_home_(2,2) = 10;
+  A_jointDS_home_(3,3) = 10; A_jointDS_home_(4,4) = 15; A_jointDS_home_(5,5) = 15;
+  A_jointDS_home_(6,6) = 15;
+  ROS_INFO_STREAM("A (jointDS): " << std::endl <<  A_jointDS_home_);
+
+  // Parameters for joint PD controller
+  k_joint_gains_ = Eigen::MatrixXd::Identity(7, 7);
+  k_joint_gains_(0,0) = 500; k_joint_gains_(1,1) = 500; k_joint_gains_(2,2) = 500;
+  k_joint_gains_(3,3) = 500; k_joint_gains_(4,4) = 500; k_joint_gains_(5,5) = 500;
+  k_joint_gains_(6,6) = 200;
+  ROS_INFO_STREAM("K (joint stiffness): " << std::endl <<  k_joint_gains_);
+
+  d_joint_gains_ = Eigen::MatrixXd::Identity(7, 7);
+  ROS_INFO_STREAM("D (joint damping): " << std::endl << d_joint_gains_);
+  d_joint_gains_(0,0) = 5; d_joint_gains_(1,1) = 5; d_joint_gains_(2,2) = 5;
+  d_joint_gains_(3,3) = 2; d_joint_gains_(4,4) = 2; d_joint_gains_(5,5) = 2;
+  d_joint_gains_(6,6) = 1;
+
+  // Ideal gains for Joint Impedance Controller
+  // k_gains: 600.0, 600.0, 600.0, 600.0, 250.0, 150.0, 50.0
+  // d_gains: 50.0, 50.0, 50.0, 20.0, 20.0, 20.0, 10.0
+
   tool_compensation_force_.setZero();
-  tool_compensation_force_(0) = -1; // Newtons
-  tool_compensation_force_(1) = -1; // Newtons
-  tool_compensation_force_(2) = -4; // Newtons
-
-
-
   return true;
 }
 
 void CartesianImpedancePoseController::starting(const ros::Time& /*time*/) {
   // compute initial velocity with jacobian and set x_attractor and q_d_nullspace
   // to initial configuration
+  
+  // Get robot current/initial joint state
   franka::RobotState initial_state = state_handle_->getRobotState();
+  Eigen::Map<Eigen::Matrix<double, 7, 1>> q_initial(initial_state.q.data());
+
   // get jacobian
   std::array<double, 42> jacobian_array =
       model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
   // convert to eigen
-  Eigen::Map<Eigen::Matrix<double, 7, 1>> q_initial(initial_state.q.data());
   Eigen::Affine3d initial_transform(Eigen::Matrix4d::Map(initial_state.O_T_EE.data()));
 
   // set desired point to current state
-  position_d_ = initial_transform.translation();
-  orientation_d_ = Eigen::Quaterniond(initial_transform.linear());
-  position_d_target_ = initial_transform.translation();
+  position_d_           = initial_transform.translation();
+  orientation_d_        = Eigen::Quaterniond(initial_transform.linear());
+  position_d_target_    = initial_transform.translation();
   orientation_d_target_ = Eigen::Quaterniond(initial_transform.linear());
 
   // set nullspace desired configuration to initial q
@@ -144,9 +173,11 @@ void CartesianImpedancePoseController::update(const ros::Time& /*time*/,
   std::array<double, 7> coriolis_array = model_handle_->getCoriolis();
   std::array<double, 42> jacobian_array =
       model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
+  std::array<double, 7> gravity_array = model_handle_->getGravity();
 
   // convert to Eigen
   Eigen::Map<Eigen::Matrix<double, 7, 1>> coriolis(coriolis_array.data());
+  Eigen::Map<Eigen::Matrix<double, 7, 1>> gravity(gravity_array.data());
   Eigen::Map<Eigen::Matrix<double, 6, 7>> jacobian(jacobian_array.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1>> q(robot_state.q.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1>> dq(robot_state.dq.data());
@@ -156,43 +187,91 @@ void CartesianImpedancePoseController::update(const ros::Time& /*time*/,
   Eigen::Vector3d position(transform.translation());
   Eigen::Quaterniond orientation(transform.linear());
 
-  // compute error to desired pose
-  // position error
-  Eigen::Matrix<double, 6, 1> error;
-  error.head(3) << position - position_d_;
-
-  // orientation error
-  if (orientation_d_.coeffs().dot(orientation.coeffs()) < 0.0) {
-    orientation.coeffs() << -orientation.coeffs();
-  }
-  // "difference" quaternion
-  Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d_);
-  error.tail(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
-  // Transform to base frame
-  error.tail(3) << -transform.linear() * error.tail(3);
-
   // compute control
   // allocate variables
   Eigen::VectorXd tau_task(7), tau_nullspace(7), tau_d(7);
+  if (_goto_home){    
+    ROS_INFO_STREAM ("Moving robot to home joint configuration.");            
+    
+    // Variables to control robot in joint space 
+    Eigen::VectorXd q_error(7), dq_desired(7), q_desired(7), q_delta(7);
+    double dt = 0.001;
+
+    // Compute linear DS in joint-space
+    q_error = q - q_home_;
+
+    dq_desired = -A_jointDS_home_ * q_error;
+
+    ROS_INFO_STREAM ("Joint position error:" << q_error.norm());
+    // ROS_INFO_STREAM ("q_vel = -A(q-q_home):" << dq_desired << std::endl);
+    
+    // Integrate to get desired position
+    q_desired = q + dq_desired*dt;
+    q_delta   = q - q_desired;
+    // ROS_INFO_STREAM ("q_delta:" << std::endl << q_delta);      
+
+    // Desired torque: Joint PD control with damping ratio = 1
+    // tau_task << -k_joint_gains_*q_delta - d_joint_gains_*dq;
+
+    // Desired torque: Joint PD control
+    tau_task << -0.50*k_joint_gains_ * q_delta - 2.0*d_joint_gains_*(dq - dq_desired);
+
+    if (q_error.norm() < jointDS_epsilon_){
+      ROS_INFO_STREAM ("Finished moving to initial joint configuration. Continuing with desired Cartesian task!" << std::endl);  
+      _goto_home = false;
+    }    
+
+    // convert to eigen
+    Eigen::Affine3d current_transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
+
+    // set desired point for Cartesian impedance controller to current state
+    position_d_  = current_transform.translation();
+
+  }
+  else{
+
+    // IF NOT GO_HOME -> DO CARTESIAN IMPEDANCE CONTROL
+    ROS_INFO_STREAM ("Doing Cartesian Impedance Control");            
+    // compute error to desired pose
+    // position error
+    Eigen::Matrix<double, 6, 1> error;
+    error.head(3) << position - position_d_;
+
+    // orientation error
+    if (orientation_d_.coeffs().dot(orientation.coeffs()) < 0.0) {
+      orientation.coeffs() << -orientation.coeffs();
+    }
+    // "difference" quaternion
+    Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d_);
+    error.tail(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
+    // Transform to base frame
+    error.tail(3) << -transform.linear() * error.tail(3);
+
+    // Cartesian PD control with damping ratio = 1
+    // tau_task << jacobian.transpose() *(-cartesian_stiffness_ * error - cartesian_damping_ * (jacobian * dq) - tool_compensation_force_);
+    tau_task << jacobian.transpose() *(-cartesian_stiffness_ * error - cartesian_damping_ * (jacobian * dq));
+    tau_task.setZero();
+  }
 
   // pseudoinverse for nullspace handling
-  // kinematic pseuoinverse
+  // kinematic pseudoinverse
   Eigen::MatrixXd jacobian_transpose_pinv;
   pseudoInverse(jacobian.transpose(), jacobian_transpose_pinv);
 
-  // Cartesian PD control with damping ratio = 1
-  tau_task << jacobian.transpose() *
-                  (-cartesian_stiffness_ * error - cartesian_damping_ * (jacobian * dq) - tool_compensation_force_);
-  
   // nullspace PD control with damping ratio = 1
   tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
                     jacobian.transpose() * jacobian_transpose_pinv) *
                        (nullspace_stiffness_ * (q_d_nullspace_ - q) -
                         (2.0 * sqrt(nullspace_stiffness_)) * dq);
+
   // Desired torque
   tau_d << tau_task + tau_nullspace + coriolis;
+  tau_d.setZero();
+
   // Saturate torque rate to avoid discontinuities
   tau_d << saturateTorqueRate(tau_d, tau_J_d);
+  ROS_INFO_STREAM ("tau_desired:" << std::endl << tau_d); 
+
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_d(i));
   }
@@ -240,10 +319,13 @@ void CartesianImpedancePoseController::complianceParamCallback(
 
 void CartesianImpedancePoseController::desiredPoseCallback(
     const geometry_msgs::PoseStampedConstPtr& msg) {
+
   position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
+  
   Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
   orientation_d_target_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y,
       msg->pose.orientation.z, msg->pose.orientation.w;
+  
   if (last_orientation_d_target.coeffs().dot(orientation_d_target_.coeffs()) < 0.0) {
     orientation_d_target_.coeffs() << -orientation_d_target_.coeffs();
   }

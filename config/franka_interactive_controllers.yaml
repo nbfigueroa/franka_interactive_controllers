@@ -1,5 +1,5 @@
-joint_position_example_controller:
-    type: franka_interactive_controllers/JointPositionExampleController
+joint_position_franka_controller:
+    type: franka_interactive_controllers/JointPositionFrankaController
     joint_names:
         - panda_joint1
         - panda_joint2
@@ -9,8 +9,8 @@ joint_position_example_controller:
         - panda_joint6
         - panda_joint7
 
-joint_velocity_example_controller:
-    type: franka_interactive_controllers/JointVelocityExampleController
+joint_velocity_franka_controller:
+    type: franka_interactive_controllers/JointVelocityFrankaController
     joint_names:
         - panda_joint1
         - panda_joint2
@@ -20,8 +20,8 @@ joint_velocity_example_controller:
         - panda_joint6
         - panda_joint7
 
-joint_impedance_example_controller:
-    type: franka_interactive_controllers/JointImpedanceExampleController
+joint_impedance_franka_controller:
+    type: franka_interactive_controllers/JointImpedanceFrankaController
     arm_id: panda
     joint_names:
         - panda_joint1

@@ -1,0 +1,21 @@
+<?xml version="1.0" ?>
+<launch>
+  <arg name="robot_ip" default="172.16.0.2"/>
+  <arg name="load_gripper" default="true" />
+  
+  <!-- Loads robot control interface -->
+  <include file="$(find franka_control)/launch/franka_control.launch" >
+    <arg name="robot_ip" value="$(arg robot_ip)" />
+    <arg name="load_gripper" value="$(arg load_gripper)" />
+  </include>
+
+  <!-- Loads controller parameters -->  
+  <rosparam command="load" file="$(find franka_interactive_controllers)/config/franka_interactive_controllers.yaml" />
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"  args="joint_impedance_franka_controller"/>  
+  
+  <!-- Convert franka state of EE to Geometry Message PoseStamped!! -->  
+  <node name="franka_to_geometry_messages" pkg="franka_interactive_controllers" type="franka_to_geometry_messages.py" respawn="false" output="screen"/>
+
+  <node pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_interactive_controllers)/launch/robot.rviz"/>
+
+</launch>

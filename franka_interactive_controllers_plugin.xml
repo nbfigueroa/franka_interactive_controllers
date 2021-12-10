@@ -1,16 +1,16 @@
 <library path="lib/libfranka_interactive_controllers">
 
-  <class name="franka_interactive_controllers/JointPositionExampleController" type="franka_interactive_controllers::JointPositionExampleController" base_class_type="controller_interface::ControllerBase">
+  <class name="franka_interactive_controllers/JointPositionFrankaController" type="franka_interactive_controllers::JointPositionFrankaController" base_class_type="controller_interface::ControllerBase">
     <description>
       CHANGE: A controller that executes a short motion based on joint positions to demonstrate correct usage
     </description>
   </class>
-  <class name="franka_interactive_controllers/JointVelocityExampleController" type="franka_interactive_controllers::JointVelocityExampleController" base_class_type="controller_interface::ControllerBase">
+  <class name="franka_interactive_controllers/JointVelocityFrankaController" type="franka_interactive_controllers::JointVelocityFrankaController" base_class_type="controller_interface::ControllerBase">
     <description>
       CHANGE: A controller that executes a short motion based on joint velocities to demonstrate correct usage
     </description>
   </class>
-  <class name="franka_interactive_controllers/JointImpedanceExampleController" type="franka_interactive_controllers::JointImpedanceExampleController" base_class_type="controller_interface::ControllerBase">
+  <class name="franka_interactive_controllers/JointImpedanceFrankaController" type="franka_interactive_controllers::JointImpedanceFrankaController" base_class_type="controller_interface::ControllerBase">
     <description>
      CHANGE: A controller that tracks a cartesian path with a joint impedance controller that compensates coriolis torques. The torque commands are compared to measured torques in Console outputs.
     </description>

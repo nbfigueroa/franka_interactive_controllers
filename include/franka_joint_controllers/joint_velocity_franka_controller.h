@@ -14,7 +14,7 @@
 
 namespace franka_interactive_controllers {
 
-class JointVelocityExampleController : public controller_interface::MultiInterfaceController<
+class JointVelocityFrankaController : public controller_interface::MultiInterfaceController<
                                            hardware_interface::VelocityJointInterface,
                                            franka_hw::FrankaStateInterface> {
  public:

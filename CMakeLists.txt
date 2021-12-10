@@ -61,10 +61,11 @@ set(H_FILES ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_pose_franka_co
 #             ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_impedance_controller_velocity_command.h
 #             ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_passiveDS_impedance_controller.h
             ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_force_controller.h
-            ${INCLUDE_DIR}/franka_joint_controllers/joint_position_example_controller.h
-            ${INCLUDE_DIR}/franka_joint_controllers/joint_velocity_example_controller.h
-            ${INCLUDE_DIR}/franka_joint_controllers/joint_impedance_example_controller.h
-            ${INCLUDE_DIR}/franka_utils/pseudo_inversion.h)
+            ${INCLUDE_DIR}/franka_joint_controllers/joint_position_franka_controller.h
+            ${INCLUDE_DIR}/franka_joint_controllers/joint_velocity_franka_controller.h
+            ${INCLUDE_DIR}/franka_joint_controllers/joint_impedance_franka_controller.h
+            ${INCLUDE_DIR}/franka_utils/pseudo_inversion.h
+            ${INCLUDE_DIR}/franka_utils/controllers_common.h)
 
 ## Specify locations of header files
 ## Your package locations should be listed before other locations
@@ -80,25 +81,12 @@ set(SRCS
 #   src/franka_cartesian_controllers/cartesian_impedance_controller_velocity_command.cpp
 #   src/franka_cartesian_controllers/cartesian_passiveDS_impedance_controller.cpp
   src/franka_cartesian_controllers/cartesian_force_controller.cpp
-  src/franka_joint_controllers/joint_position_example_controller.cpp
-  src/franka_joint_controllers/joint_velocity_example_controller.cpp
-  src/franka_joint_controllers/joint_impedance_example_controller.cpp)
-
+  src/franka_joint_controllers/joint_position_franka_controller.cpp
+  src/franka_joint_controllers/joint_velocity_franka_controller.cpp
+  src/franka_joint_controllers/joint_impedance_franka_controller.cpp
+  src/franka_utils/controllers_common.cpp)
 
 add_library(franka_interactive_controllers ${H_FILES} ${SRCS})
-
-# AS IN THE FRANKA_EXAMPLE_CONTROLLERS CMAKELIST
-# add_library(franka_interactive_controllers
-#   src/franka_cartesian_controllers/cartesian_pose_franka_controller.cpp
-#   src/franka_cartesian_controllers/cartesian_velocity_franka_controller.cpp
-#   src/franka_cartesian_controllers/cartesian_impedance_controller_pose_command.cpp
-# #   src/franka_cartesian_controllers/cartesian_impedance_controller_velocity_command.cpp
-# #   src/franka_cartesian_controllers/cartesian_passiveDS_impedance_controller.cpp
-#   src/franka_cartesian_controllers/cartesian_force_controller.cpp
-#   src/franka_joint_controllers/joint_position_example_controller.cpp
-#   src/franka_joint_controllers/joint_velocity_example_controller.cpp
-#   src/franka_joint_controllers/joint_impedance_example_controller.cpp
-# )
 
 add_dependencies(franka_interactive_controllers
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
