@@ -113,7 +113,9 @@ bool CartesianImpedancePoseController::init(hardware_interface::RobotHW* robot_h
 
   // Parameters for jointDS controller (THIS SHOULD BE IN ANOTHER SCRIPT!! DS MOTION GENERATOR?)
   q_home_ << 0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4;
-  jointDS_epsilon_ = 0.05;
+  jointDS_epsilon_  = 0.05;
+  dq_filter_params_ = 0.555;
+
   A_jointDS_home_ = Eigen::MatrixXd::Identity(7, 7);
   A_jointDS_home_(0,0) = 10; A_jointDS_home_(1,1) = 10; A_jointDS_home_(2,2) = 10;
   A_jointDS_home_(3,3) = 10; A_jointDS_home_(4,4) = 15; A_jointDS_home_(5,5) = 15;
@@ -197,6 +199,8 @@ void CartesianImpedancePoseController::update(const ros::Time& /*time*/,
   // allocate variables
   Eigen::VectorXd tau_task(7), tau_nullspace(7), tau_d(7), tau_tool(7);
 
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // This is the if statement that should be made into two different controllers
   if (_goto_home){    
     ROS_INFO_STREAM ("Moving robot to home joint configuration.");            
     
@@ -209,7 +213,6 @@ void CartesianImpedancePoseController::update(const ros::Time& /*time*/,
     dq_desired = -A_jointDS_home_ * q_error;
 
     // Filter desired velocity to avoid high accelerations!
-    double dq_filter_params_  = 0.5555;
     dq_filtered = (1-dq_filter_params_)*dq + dq_filter_params_*dq_desired;
 
     ROS_INFO_STREAM ("Joint position error:" << q_error.norm());
@@ -218,13 +221,12 @@ void CartesianImpedancePoseController::update(const ros::Time& /*time*/,
 
     // Integrate to get desired position
     q_desired = q + dq_desired*dt;
-    q_delta   = q - q_desired;
 
     // Desired torque: Joint PD control with damping ratio = 1
-    // tau_task << -k_joint_gains_*q_delta - d_joint_gains_*dq;
+    tau_task << -k_joint_gains_*(q - q_desired) - d_ff_joint_gains_*dq;
 
     // Desired torque: Joint PD control
-    tau_task << -0.50*k_joint_gains_ * q_delta - 2.0*d_joint_gains_*(dq - dq_desired);
+    // tau_task << -0.50*k_joint_gains_ * q_delta - 2.0*d_joint_gains_*(dq - dq_desired) - d_ff_joint_gains_*dq;
 
     if (q_error.norm() < jointDS_epsilon_){
       ROS_INFO_STREAM ("Finished moving to initial joint configuration. Continuing with desired Cartesian task!" << std::endl);  
@@ -260,6 +262,7 @@ void CartesianImpedancePoseController::update(const ros::Time& /*time*/,
     // Cartesian PD control with damping ratio = 1
     tau_task << jacobian.transpose() *(-cartesian_stiffness_ * error - cartesian_damping_ * (jacobian * dq));
   }
+  //////////////////////////////////////////////////////////////////////////////////////////////////
 
   // pseudoinverse for nullspace handling
   // kinematic pseudoinverse

@@ -57,6 +57,7 @@ class CartesianImpedancePoseController : public controller_interface::MultiInter
   // Variables for initialization and tool compensation
   bool _goto_home;
   double jointDS_epsilon_;
+  double dq_filter_params_;
   Eigen::Matrix<double, 7, 1> q_home_;
   Eigen::Matrix<double, 7, 7> A_jointDS_home_;
   Eigen::Matrix<double, 7, 7> k_joint_gains_;

@@ -84,7 +84,8 @@ set(SRCS
   src/franka_joint_controllers/joint_position_franka_controller.cpp
   src/franka_joint_controllers/joint_velocity_franka_controller.cpp
   src/franka_joint_controllers/joint_impedance_franka_controller.cpp
-  src/franka_utils/controllers_common.cpp)
+  src/franka_utils/controllers_common.cpp
+  src/joint_goal_motion_generator_node.cpp)
 
 add_library(franka_interactive_controllers ${H_FILES} ${SRCS})
 
@@ -109,6 +110,9 @@ target_include_directories(franka_interactive_controllers SYSTEM PUBLIC
 target_include_directories(franka_interactive_controllers PUBLIC
   include
 )
+
+add_executable(joint_goal_motion_generator_node src/joint_goal_motion_generator_node.cpp)
+target_link_libraries(joint_goal_motion_generator_node franka_interactive_controllers)
 
 ## Installation
 install(TARGETS franka_interactive_controllers
