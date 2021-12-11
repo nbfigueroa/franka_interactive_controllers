@@ -84,8 +84,7 @@ set(SRCS
   src/franka_joint_controllers/joint_position_franka_controller.cpp
   src/franka_joint_controllers/joint_velocity_franka_controller.cpp
   src/franka_joint_controllers/joint_impedance_franka_controller.cpp
-  src/franka_utils/controllers_common.cpp
-  src/joint_goal_motion_generator_node.cpp)
+  src/franka_utils/controllers_common.cpp)
 
 add_library(franka_interactive_controllers ${H_FILES} ${SRCS})
 
@@ -111,8 +110,15 @@ target_include_directories(franka_interactive_controllers PUBLIC
   include
 )
 
-add_executable(joint_goal_motion_generator_node src/joint_goal_motion_generator_node.cpp)
-target_link_libraries(joint_goal_motion_generator_node franka_interactive_controllers)
+# Loading executables to do common tasks (send robot to jointpose and open/close gripper)
+add_executable(franka_joint_goal_motion_generator src/franka_joint_goal_motion_generator.cpp)
+target_link_libraries(franka_joint_goal_motion_generator franka_interactive_controllers ${catkin_LIBRARIES})
+
+add_executable(franka_gripper_run src/franka_gripper_run.cpp)
+target_link_libraries(franka_gripper_run franka_interactive_controllers ${catkin_LIBRARIES})
+
+add_executable(franka_gripper_run_node src/franka_gripper_run_ros.cpp)
+target_link_libraries(franka_gripper_run_node franka_interactive_controllers ${catkin_LIBRARIES})
 
 ## Installation
 install(TARGETS franka_interactive_controllers
@@ -133,7 +139,11 @@ install(FILES franka_interactive_controllers_plugin.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 catkin_install_python(
-  PROGRAMS scripts/interactive_marker.py scripts/move_to_start.py scripts/franka_cartesian_impedance_pose_command.py scripts/franka_to_geometry_messages.py
+  PROGRAMS scripts/interactive_marker.py 
+  scripts/move_to_start.py 
+  scripts/franka_cartesian_impedance_pose_command.py
+  scripts/franka_to_geometry_messages.py
+  scripts/franka_gui_gripper_run.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

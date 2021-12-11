@@ -17,6 +17,8 @@
 
 #include "controllers_common.h"
 
+// #include "ros/ros.h"
+
 namespace {
 template <class T, size_t N>
 std::ostream& operator<<(std::ostream& ostream, const std::array<T, N>& array) {
@@ -29,19 +31,25 @@ std::ostream& operator<<(std::ostream& ostream, const std::array<T, N>& array) {
 }  // anonymous namespace
 
 int main(int argc, char** argv) {
-  // Check whether the required arguments were passed.
-  if (argc != 3) {
-    std::cerr << "Usage: " << argv[0] << " <robot_ip>" << " <goal_id>" << std::endl;
+
+  // ros::init(argc, argv, "franka_joint_goal_motion_generator_node");
+  // ros::NodeHandle nh;
+  // ros::NodeHandle _nh("~");
+  std::string franka_ip = "172.16.0.2";
+
+  // Check whether the required arguments were passed replace this with rosparam!
+  if (argc != 2) {
+    std::cerr << "Usage: " << argv[0] << " <goal_id>" << std::endl;
     return -1;
   }
 
   try {
     // Connect to robot.
-    franka::Robot robot(argv[1]);
+    franka::Robot robot(franka_ip);
     setDefaultBehavior(robot);
 
     // First move the robot to a suitable joint configuration
-    int goal_id = std::stod(argv[2]);
+    int goal_id = std::stod(argv[1]);
 
     std::array<double, 7> q_goal = {{0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4}};
     switch(goal_id) {
@@ -87,5 +95,9 @@ int main(int argc, char** argv) {
   } catch (const franka::Exception& ex) {
     std::cerr << ex.what() << std::endl;
   }
+
+  // Stop the node's resources
+  // ros::shutdown();
+  // Exit tranquilly
   return 0;
 }
