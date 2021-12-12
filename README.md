@@ -52,3 +52,6 @@ rosrun franka_interactive_controllers franka_gui_gripper_run.py
 ---
 ## Contact
 Maintainer: [Nadia Figueroa](https://nbfigueroa.github.io/) (nadiafig @ seas dot upenn edu)
+
+## Licenses
+Please note that the some the structure of the controllers is dervied from franka_ros https://github.com/frankaemika/franka_ros/ . It is licenced under Apache 2.0, wheras the rest of the repository is licenced under an MIT license (see LICENSE for details).
