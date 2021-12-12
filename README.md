@@ -1,6 +1,6 @@
 # franka_interactive_controllers
 
-Control interface built on top of [franka_ros](https://frankaemika.github.io/docs/franka_ros.html) that allows to control the robot in several joint and Cartesian space impedance control schemes for interactive, safe and reactive (mostly DS-based) motion planning and learning. This low-level contol interface is used and developed by/for [Prof. Nadia Figueroa](https://github.com/nbfigueroa) and her collaborators and students. 
+Control interface built on top of [franka_ros](https://frankaemika.github.io/docs/franka_ros.html) that allows to control the robot in several joint and Cartesian space impedance control schemes for interactive, safe and reactive (mostly DS-based) motion planning and learning. This low-level contol interface is used and developed by/for [Prof. Nadia Figueroa](https://github.com/nbfigueroa) and her collaborators and students. Initially developed at MIT in the [Interactive Robotics Group](https://interactive.mit.edu/).
 
 ---
 ## Installation
