@@ -25,10 +25,10 @@ bool JointImpedanceFrankaController::init(hardware_interface::RobotHW* robot_hw,
     ROS_INFO_STREAM(
         "JointImpedanceFrankaController: No parameter radius, defaulting to: " << radius_);
   }
-  if (std::fabs(radius_) < 0.005) {
-    ROS_INFO_STREAM("JointImpedanceFrankaController: Set radius to small, defaulting to: " << 0.1);
-    radius_ = 0.1;
-  }
+  // if (std::fabs(radius_) < 0.005) {
+  //   ROS_INFO_STREAM("JointImpedanceFrankaController: Set radius to small, defaulting to: " << 0.1);
+  //   radius_ = 0.1;
+  // }
 
   if (!node_handle.getParam("vel_max", vel_max_)) {
     ROS_INFO_STREAM(

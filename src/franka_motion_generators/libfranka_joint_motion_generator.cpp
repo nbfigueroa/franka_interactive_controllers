@@ -1,7 +1,5 @@
 // Copyright (c) 2017 Franka Emika GmbH
 // Use of this source code is governed by the Apache-2.0 license, see LICENSE
-#include "controllers_common.h"
-
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -9,15 +7,7 @@
 #include <franka/exception.h>
 #include <franka/robot.h>
 
-void setDefaultBehavior(franka::Robot& robot) {
-  robot.setCollisionBehavior(
-      {{20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0}}, {{20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0}},
-      {{10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0}}, {{10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0}},
-      {{20.0, 20.0, 20.0, 20.0, 20.0, 20.0}}, {{20.0, 20.0, 20.0, 20.0, 20.0, 20.0}},
-      {{10.0, 10.0, 10.0, 10.0, 10.0, 10.0}}, {{10.0, 10.0, 10.0, 10.0, 10.0, 10.0}});
-  robot.setJointImpedance({{3000, 3000, 3000, 2500, 2500, 2000, 2000}});
-  robot.setCartesianImpedance({{3000, 3000, 3000, 300, 300, 300}});
-}
+#include <franka_motion_generators/libfranka_joint_motion_generator.h>
 
 MotionGenerator::MotionGenerator(double speed_factor, const std::array<double, 7> q_goal)
     : q_goal_(q_goal.data()) {

@@ -11,8 +11,9 @@
 #include <ros/ros.h>
 
 #include <pseudo_inversion.h>
-#include <controllers_common.h>
 #include <hardware_interface/joint_command_interface.h>
+
+// #include "libfranka_joint_motion_generator.h"
 
 namespace franka_interactive_controllers {
 
@@ -216,8 +217,8 @@ void CartesianImpedancePoseController::update(const ros::Time& /*time*/,
     dq_filtered = (1-dq_filter_params_)*dq + dq_filter_params_*dq_desired;
 
     ROS_INFO_STREAM ("Joint position error:" << q_error.norm());
-    ROS_INFO_STREAM ("dq_desired:" << std::endl << dq_desired);
-    ROS_INFO_STREAM ("dq_filtered:" << std::endl << dq_filtered);
+    // ROS_INFO_STREAM ("dq_desired:" << std::endl << dq_desired);
+    // ROS_INFO_STREAM ("dq_filtered:" << std::endl << dq_filtered);
 
     // Integrate to get desired position
     q_desired = q + dq_desired*dt;
@@ -284,7 +285,7 @@ void CartesianImpedancePoseController::update(const ros::Time& /*time*/,
 
   // Saturate torque rate to avoid discontinuities
   tau_d << saturateTorqueRate(tau_d, tau_J_d);
-  ROS_INFO_STREAM ("tau_desired:" << std::endl << tau_d); 
+  // ROS_INFO_STREAM ("tau_desired:" << std::endl << tau_d); 
 
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_d(i));

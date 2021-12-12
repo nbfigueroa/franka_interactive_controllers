@@ -64,8 +64,8 @@ set(H_FILES ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_pose_franka_co
             ${INCLUDE_DIR}/franka_joint_controllers/joint_position_franka_controller.h
             ${INCLUDE_DIR}/franka_joint_controllers/joint_velocity_franka_controller.h
             ${INCLUDE_DIR}/franka_joint_controllers/joint_impedance_franka_controller.h
-            ${INCLUDE_DIR}/franka_utils/pseudo_inversion.h
-            ${INCLUDE_DIR}/franka_utils/controllers_common.h)
+            ${INCLUDE_DIR}/franka_motion_generators/libfranka_joint_motion_generator.h
+            ${INCLUDE_DIR}/franka_utils/pseudo_inversion.h)
 
 ## Specify locations of header files
 ## Your package locations should be listed before other locations
@@ -84,7 +84,7 @@ set(SRCS
   src/franka_joint_controllers/joint_position_franka_controller.cpp
   src/franka_joint_controllers/joint_velocity_franka_controller.cpp
   src/franka_joint_controllers/joint_impedance_franka_controller.cpp
-  src/franka_utils/controllers_common.cpp)
+  src/franka_motion_generators/libfranka_joint_motion_generator.cpp)
 
 add_library(franka_interactive_controllers ${H_FILES} ${SRCS})
 
@@ -110,15 +110,21 @@ target_include_directories(franka_interactive_controllers PUBLIC
   include
 )
 
-# Loading executables to do common tasks (send robot to jointpose and open/close gripper)
-add_executable(franka_joint_goal_motion_generator src/franka_joint_goal_motion_generator.cpp)
-target_link_libraries(franka_joint_goal_motion_generator franka_interactive_controllers ${catkin_LIBRARIES})
-
-add_executable(franka_gripper_run src/franka_gripper_run.cpp)
-target_link_libraries(franka_gripper_run franka_interactive_controllers ${catkin_LIBRARIES})
-
-add_executable(franka_gripper_run_node src/franka_gripper_run_ros.cpp)
+# Executable using franka_ros control interface for joint-space goal motion and open/close the gripper
+add_executable(franka_gripper_run_node src/franka_gripper_run_node.cpp)
 target_link_libraries(franka_gripper_run_node franka_interactive_controllers ${catkin_LIBRARIES})
+
+add_executable(franka_joint_goal_motion_generator_node src/franka_joint_goal_motion_generator_node.cpp)
+target_link_libraries(franka_joint_goal_motion_generator_node franka_interactive_controllers ${catkin_LIBRARIES})
+
+
+# Executable using libfranka library ONLY for joint-space goal motion and open/close the gripper
+add_executable(libfranka_gripper_run src/libfranka_gripper_run.cpp)
+target_link_libraries(libfranka_gripper_run franka_interactive_controllers ${catkin_LIBRARIES})
+
+add_executable(libfranka_joint_goal_motion_generator src/libfranka_joint_goal_motion_generator.cpp)
+target_link_libraries(libfranka_joint_goal_motion_generator franka_interactive_controllers ${catkin_LIBRARIES})
+
 
 ## Installation
 install(TARGETS franka_interactive_controllers
