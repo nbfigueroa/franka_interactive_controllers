@@ -34,11 +34,11 @@ $ rosdep install --from-paths . --ignore-src --rosdistro <your-ros-distro>
 
 ## Usage
 **[ROBOT LAUNCH]**   
-- To bring up the standalone robot with no specific controllers but all the [franka_ros](https://frankaemika.github.io/docs/franka_ros.html) control functionalities + gripper GUI controller:
+- To bring up the standalone robot with [franka_ros](https://frankaemika.github.io/docs/franka_ros.html):
   ```bash
   roslaunch franka_interactive_controllers franka_interactive_bringup.launch 
   ```
-  This will only load the available controllers but not activate them, to do that follow the instructions next.
+  This will load franka_control functionalities + gripper GUI controller + configured rviz.
 
 - To bringup the robot with kinesthetic teaching functionalities:
   ```bash
