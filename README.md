@@ -43,7 +43,7 @@ roslaunch franka_interactive_controllers franka_interactive_bringup.launch
 - Do gravity compensation to record kinesthetic trajectories.
 
 
-**[GRIPPER CONTROL]:** This repo includes a ros-nodified version of  [franka_gripper_run](https://github.com/nbfigueroa/franka_gripper_run) that uses the actionlib server from franka_ros/franka_gripper. A simple action client node that open/closes the gripper can be used by running the following:
+**[GRIPPER CONTROL]:** This repo includes a ros-nodified version of  [franka_gripper_run](https://github.com/nbfigueroa/franka_gripper_run) that uses the actionlib server from [franka_ros/franka_gripper](https://frankaemika.github.io/docs/franka_ros.html#franka-gripper). A simple action client node that open/closes the gripper can be used by running the following:
 ```bash
 rosrun franka_interactive_controllers franka_gripper_run_node <command_type>
 ```
