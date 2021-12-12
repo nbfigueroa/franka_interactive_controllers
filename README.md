@@ -1,9 +1,8 @@
 # franka_interactive_controllers
 
-Control interface built on top of franka_ros for interactive controllers.
+Control interface built on top of [franka_ros](https://frankaemika.github.io/docs/franka_ros.html) that allows to control the robot in several joint and Cartesian space impedance control schemes for interactive, safe and reactive (mostly DS-based) motion planning and learning following the approaches used and proposed by [Prof. Nadia Figueroa](https://github.com/nbfigueroa) and her collaborators and students. 
 
-
-
+---
 ## Installation
 This package depends on several other code repositories that are robot-agnostic. To install this repo and all its dependencies do the following steps:
 * In your catkin src directory clone the repository
@@ -34,9 +33,6 @@ $ rosdep install --from-paths . --ignore-src --rosdistro <your-ros-distro>
 
 
 ## Usage
-
-
-
 To bring up the standalone robot with no specific controllers but all the franka_ros functionalities + gripper GUI contoller + geometry messages of EE pose:
 ```bash
 roslaunch franka_interactive_controllers franka_bringup.launch 
@@ -52,3 +48,7 @@ To run the GUI like [franka_gripper_run](https://github.com/nbfigueroa/franka_gr
 ```bash
 rosrun franka_interactive_controllers franka_gui_gripper_run.py
 ```
+
+---
+## Contact
+Maintainer: [Nadia Figueroa](https://nbfigueroa.github.io/) (nadiafig @ seas dot upenn edu)
