@@ -8,8 +8,9 @@ Panels:
         - /Status1
         - /RobotModel1
         - /TF1/Frames1
+        - /WrenchStamped1
       Splitter Ratio: 0.5
-    Tree Height: 352
+    Tree Height: 498
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -192,18 +193,18 @@ Visualization Manager:
                               {}
       Update Interval: 0
       Value: true
-    - Alpha: 1
-      Arrow Width: 0.5
+    - Alpha: 0.5
+      Arrow Width: 0.25
       Class: rviz/WrenchStamped
       Enabled: true
-      Force Arrow Scale: 2
+      Force Arrow Scale: 0.20000000298023224
       Force Color: 204; 51; 51
       Hide Small Values: true
       History Length: 1
       Name: WrenchStamped
       Queue Size: 10
       Topic: /franka_state_controller/F_ext
-      Torque Arrow Scale: 2
+      Torque Arrow Scale: 0.20000000298023224
       Torque Color: 204; 204; 51
       Unreliable: false
       Value: true
@@ -235,7 +236,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.1508774757385254
+      Distance: 3.546329975128174
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -243,17 +244,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.013240978121757507
-        Y: 0.32851725816726685
-        Z: 0.2013576179742813
+        X: -0.16579556465148926
+        Y: 0.1855967789888382
+        Z: 0.5451532602310181
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3753977119922638
+      Pitch: 0.26539766788482666
       Target Frame: <Fixed Frame>
-      Yaw: 5.4435858726501465
+      Yaw: 5.313579559326172
     Saved: ~
 Window Geometry:
   Displays:
@@ -272,4 +273,4 @@ Window Geometry:
     collapsed: false
   Width: 1003
   X: 127
-  Y: 29
+  Y: 27
