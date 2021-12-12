@@ -5,7 +5,7 @@ Control interface built on top of franka_ros for interactive controllers.
 
 
 ## Installation
-Do the following steps:
+This package depends on several other code repositories that are robot-agnostic. To install this repo and all its dependencies do the following steps:
 * In your catkin src directory clone the repository
 ```
 $ git clone https://github.com/nbfigueroa/franka_interactive_controllers.git
