@@ -38,7 +38,7 @@ $ rosdep install --from-paths . --ignore-src --rosdistro <your-ros-distro>
   ```bash
   roslaunch franka_interactive_controllers franka_interactive_bringup.launch 
   ```
-  This will only load the available controllers but not activate them, to do that follow the instructions **[ROBOT CONTROLLERS]**.
+  This will only load the available controllers but not activate them, to do that follow the instructions next.
 
 - To bringup the robot with kinesthetic teaching functionalities:
   ```bash
