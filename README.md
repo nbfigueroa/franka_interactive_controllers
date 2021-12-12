@@ -34,21 +34,27 @@ $ rosdep install --from-paths . --ignore-src --rosdistro <your-ros-distro>
 
 ## Usage
 **[ROBOT LAUNCH]**   
-To bring up the standalone robot with no specific controllers but all the [franka_ros](https://frankaemika.github.io/docs/franka_ros.html) control functionalities + gripper GUI controller:
-```bash
-roslaunch franka_interactive_controllers franka_interactive_bringup.launch 
-```
-This will only load the available controllers but not activate them, to do that follow the instructions next.
+- To bring up the standalone robot with no specific controllers but all the [franka_ros](https://frankaemika.github.io/docs/franka_ros.html) control functionalities + gripper GUI controller:
+  ```bash
+  roslaunch franka_interactive_controllers franka_interactive_bringup.launch 
+  ```
+  This will only load the available controllers but not activate them, to do that follow the instructions **[ROBOT CONTROLLERS]**.
 
-To bringup the robot with kinesthetic teaching functionalities:
-```bash
-roslaunch franka_interactive_controllers franka_kinesthetic_teaching.launch 
-```
-This will load a specific torque controller that compensates for the weight of any additional tool that is mounted on the robot. The F_x, F_y and F_z forces imposed on the end-effector with this additional weight should be added as parameters in a yaml file in the config directory.
+- To bringup the robot with kinesthetic teaching functionalities:
+  ```bash
+  roslaunch franka_interactive_controllers ...
+  ```
+  This will load a specific torque controller that compensates for the weight of any additional tool that is mounted on the robot. The F_x, F_y and F_z forces imposed on the end-effector with this additional weight should be added as parameters in a yaml file in the config directory. It will also load data recording nodes for [easy-kinesthetic-teaching](https://github.com/nbfigueroa/easy-kinesthetic-recording). More details on how to use this teaching can be found in the README file of that repo, see the ``latest-franka`` branch. 
 
 **[ROBOT CONTROLLERS]** 
-- Move robot to desired joint configuration (q_goal).
-- Do gravity compensation to record kinesthetic trajectories.
+- To move robot to desired joint configuration (q_goal) with a motion generator and joint impedance control:
+  ```bash
+  roslaunch franka_interactive_controllers ...
+  ```
+- To do gravity compensation to guide the robot kinesthetically:
+  ```bash
+  roslaunch franka_interactive_controllers ...
+  ```
 
 **[GRIPPER CONTROL]**  
 This repo includes a ros-nodified version of  [franka_gripper_run](https://github.com/nbfigueroa/franka_gripper_run) that uses the actionlib server from [franka_ros/franka_gripper](https://frankaemika.github.io/docs/franka_ros.html#franka-gripper). A simple action client node that open/closes the gripper can be used by running the following:
