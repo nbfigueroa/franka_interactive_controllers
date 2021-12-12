@@ -1,0 +1,14 @@
+
+- git:
+    local-name: robot_velocity_filters
+    uri: https://github.com/nbfigueroa/robot_velocity_filters.git
+
+- git:
+    local-name: robot_math_tools
+    uri: https://github.com/nbfigueroa/robot_math_tools.git
+    
+- git:
+    local-name: fast-gmm
+    uri: https://github.com/epfl-lasa/fast-gmm.git
+    version: devel  
+    
