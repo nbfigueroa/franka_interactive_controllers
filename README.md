@@ -33,17 +33,25 @@ $ rosdep install --from-paths . --ignore-src --rosdistro <your-ros-distro>
 
 
 ## Usage
-**[LAUNCH ROBOT]:** To bring up the standalone robot with no specific controllers but all the franka_ros control functionalities + gripper GUI contoller:
+**[ROBOT LAUNCH]**   
+To bring up the standalone robot with no specific controllers but all the [franka_ros](https://frankaemika.github.io/docs/franka_ros.html) control functionalities + gripper GUI contoller:
 ```bash
 roslaunch franka_interactive_controllers franka_interactive_bringup.launch 
 ```
+This will only load the available controllers but not activate them, to do that follow the instructions next.
 
-**[ROBOT CONTROLLERS]:**
+To bringup the robot with kinesthetic teaching functionalities:
+```bash
+roslaunch franka_interactive_controllers franka_kinesthetic_teaching.launch 
+```
+This will load a specific torque controller that compensates for the weight of any additional tool that is mounted on the robot. The F_x, F_y and F_z forces imposed on the end-effector with this additional weight should be added as parameters in a yaml file in the config directory.
+
+**[ROBOT CONTROLLERS]** 
 - Move robot to desired joint configuration (q_goal).
 - Do gravity compensation to record kinesthetic trajectories.
 
-
-**[GRIPPER CONTROL]:** This repo includes a ros-nodified version of  [franka_gripper_run](https://github.com/nbfigueroa/franka_gripper_run) that uses the actionlib server from [franka_ros/franka_gripper](https://frankaemika.github.io/docs/franka_ros.html#franka-gripper). A simple action client node that open/closes the gripper can be used by running the following:
+**[GRIPPER CONTROL]**  
+This repo includes a ros-nodified version of  [franka_gripper_run](https://github.com/nbfigueroa/franka_gripper_run) that uses the actionlib server from [franka_ros/franka_gripper](https://frankaemika.github.io/docs/franka_ros.html#franka-gripper). A simple action client node that open/closes the gripper can be used by running the following:
 ```bash
 rosrun franka_interactive_controllers franka_gripper_run_node <command_type>
 ```
@@ -55,6 +63,8 @@ You can also control the gripper with a GUI like in [franka_gripper_run](https:/
 ```bash
 rosrun franka_interactive_controllers franka_gui_gripper_run.py
 ```
+
+**[LIBFRANKA CONTROLLERS]** We also include some controllers for joint motion generator to a goal and the open/close gripper bypassing franka_ros; i.e. using solely the libfranka interface. These cannot be used when either of the launch files above are running, but can be useful to quickly setup a robot; i.e. open/close gripper and send to a desired joint configuration
 
 ---
 ## Contact
