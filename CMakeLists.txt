@@ -78,11 +78,10 @@ include_directories(${dynamic_reconfigure_PACKAGE_PATH}/cmake/cfgbuild.cmake)
 ## Declare a C++ executable
 set(SRCS
   src/franka_cartesian_controllers/cartesian_pose_impedance_controller.cpp
-#   src/franka_cartesian_controllers/cartesian_impedance_controller_velocity_command.cpp
+#   src/franka_cartesian_controllers/cartesian_velocity_impedance_controller.cpp
 #   src/franka_cartesian_controllers/cartesian_passiveDS_impedance_controller.cpp
   src/franka_cartesian_controllers/cartesian_pose_franka_controller.cpp
   src/franka_cartesian_controllers/cartesian_velocity_franka_controller.cpp
-  src/franka_cartesian_controllers/cartesian_impedance_controller_pose_command.cpp
   src/franka_cartesian_controllers/cartesian_force_controller.cpp
   src/franka_joint_controllers/joint_gravity_compensation_controller.cpp
   src/franka_joint_controllers/joint_position_franka_controller.cpp

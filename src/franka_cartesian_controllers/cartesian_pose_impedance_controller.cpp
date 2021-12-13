@@ -245,7 +245,7 @@ void CartesianPoseImpedanceController::update(const ros::Time& /*time*/,
   else{
 
     // IF NOT GO_HOME -> DO CARTESIAN IMPEDANCE CONTROL
-    ROS_INFO_STREAM ("Doing Cartesian Impedance Control");            
+    // ROS_INFO_STREAM ("Doing Cartesian Impedance Control");            
     // compute error to desired pose
     // position error
     Eigen::Matrix<double, 6, 1> error;

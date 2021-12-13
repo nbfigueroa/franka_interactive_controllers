@@ -23,7 +23,7 @@ class Mover(object):
                          FrankaState, self.franka_callback)
 
         self.pose_pub = rospy.Publisher(
-            "/cartesian_impedance_example_controller/equilibrium_pose", PoseStamped, queue_size=10)
+            "/cartesian_impedance_example_controller/desired_pose", PoseStamped, queue_size=10)
         # Sleep to wait for publisher ready
         rospy.sleep(1)
 

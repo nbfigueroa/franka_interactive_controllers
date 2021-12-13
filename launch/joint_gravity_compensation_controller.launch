@@ -16,8 +16,7 @@
   </group>
   
   <!-- Load desired controller-->  
-  <rosparam command="load" file="$(find franka_interactive_controllers)/config/external_tool_compensation.yml"/>
-  <rosparam command="load" file="$(find franka_interactive_controllers)/config/desired_nullspace.yml"/>
+  <rosparam command="load" file="$(find franka_interactive_controllers)/config/external_tool_compensation.yaml"/>
   <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_gravity_compensation_controller"/>
 
 </launch>

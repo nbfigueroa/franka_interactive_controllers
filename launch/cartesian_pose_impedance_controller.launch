@@ -18,7 +18,7 @@
   
   <!-- Load desired controller-->  
   <rosparam command="load" file="$(find franka_interactive_controllers)/config/external_tool_compensation.yaml"/>
-  <rosparam command="load" file="$(find franka_interactive_controllers)/config/desired_nullspace.yml"/>
+  <rosparam command="load" file="$(find franka_interactive_controllers)/config/desired_nullspace.yaml"/>
   <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="cartesian_pose_impedance_controller"/>
 
   <!-- IF interactive marker= true: Use interactive marker to define desired pose for impedance (stiffness + damping compensation) controller --> 

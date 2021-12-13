@@ -81,7 +81,6 @@ bool JointGravityCompensationController::init(hardware_interface::RobotHW* robot
     }
   }
 
-
   // Getting Dynamic Reconfigure objects
   dynamic_reconfigure_gravity_compensation_param_node_ =
       ros::NodeHandle(node_handle.getNamespace() + "dynamic_reconfigure_gravity_compensation_param_node");
@@ -94,11 +93,17 @@ bool JointGravityCompensationController::init(hardware_interface::RobotHW* robot
       boost::bind(&JointGravityCompensationController::gravitycompensationParamCallback, this, _1, _2));
 
   
-  // TODO: This should be read by a .yaml file!
+  // Initialize variables for joint locks
+  set_locked_joints_position_ = false;
+  activate_lock_joint6_ = false;
+  activate_lock_joint7_ = false;
+  k_lock_      = 50; 
+  q_locked_joints_.setZero();
+
+  // Initialize variables for tool compensation
   activate_tool_compensation_ = true;
   tool_compensation_force_.setZero();
-  tool_compensation_force_ << 0.46, -0.17, -1.64, 0, 0, 0;
-  q_d_nullspace_ << 0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4;
+  tool_compensation_force_ << 0.46, -0.17, -1.64, 0, 0, 0; //read from yaml
 
   return true;
 }
@@ -111,9 +116,6 @@ void JointGravityCompensationController::starting(const ros::Time& /*time*/) {
   // get jacobian
   std::array<double, 42> jacobian_array =
       model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
-
-  // set nullspace desired configuration to initial q
-  q_d_nullspace_ = q_initial;
 }
 
 void JointGravityCompensationController::update(const ros::Time& /*time*/,
@@ -134,20 +136,14 @@ void JointGravityCompensationController::update(const ros::Time& /*time*/,
 
   // compute control
   // allocate variables
-  Eigen::VectorXd tau_d(7), tau_nullspace(7), tau_tool(7);
+  Eigen::VectorXd tau_d(7), tau_task(7), tau_nullspace(7), tau_tool(7);
 
   // pseudoinverse for nullspace handling kinematic pseudoinverse
   Eigen::MatrixXd jacobian_transpose_pinv;
   pseudoInverse(jacobian.transpose(), jacobian_transpose_pinv);
 
   // Set 0 torques for the controller
-  tau_d.setZero();
-
-  // nullspace PD control with damping ratio = 1
-  tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
-                    jacobian.transpose() * jacobian_transpose_pinv) *
-                       (nullspace_stiffness_ * (q_d_nullspace_ - q) -
-                        (2.0 * sqrt(nullspace_stiffness_)) * dq);
+  tau_task.setZero();
 
   // Compute tool compensation (scoop/camera in scooping task)
   if (activate_tool_compensation_)
@@ -155,8 +151,20 @@ void JointGravityCompensationController::update(const ros::Time& /*time*/,
   else
     tau_tool.setZero();
 
+  if (activate_lock_joint6_){
+    double tau_task_6 = -k_lock_*(q[5] -  q_locked_joints_[5]) ;
+    std::cout << "tau_task_6: " << tau_task_6 << std::endl;
+    tau_task[5] = tau_task_6;
+  }
+
+  if (activate_lock_joint7_){
+    double tau_task_7 = -k_lock_*(q[6] -  q_locked_joints_[6]) ;
+    std::cout << "tau_task_7: " << tau_task_7 << std::endl;
+    tau_task[6] = tau_task_7;
+  }
+
   // Desired torque (Check this.. might not be necessary)
-  tau_d << tau_d + tau_nullspace + coriolis - tau_tool;
+  tau_d << tau_task + coriolis - tau_tool;
 
   // Alternative 
   // tau_d.setZero();
@@ -167,11 +175,6 @@ void JointGravityCompensationController::update(const ros::Time& /*time*/,
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_d(i));
   }
-
-  // update parameters changed online either through dynamic reconfigure or through the interactive
-  // target by filtering
-  nullspace_stiffness_ =
-      filter_params_ * nullspace_stiffness_target_ + (1.0 - filter_params_) * nullspace_stiffness_;
 }
 
 Eigen::Matrix<double, 7, 1> JointGravityCompensationController::saturateTorqueRate(
@@ -189,8 +192,21 @@ Eigen::Matrix<double, 7, 1> JointGravityCompensationController::saturateTorqueRa
 void JointGravityCompensationController::gravitycompensationParamCallback(
     franka_interactive_controllers::gravity_compensation_paramConfig& config,
     uint32_t /*level*/) {
-  nullspace_stiffness_target_ = config.nullspace_stiffness;
+  
+  // To activate external tool compensation
   activate_tool_compensation_ = config.activate_tool_compensation;
+  
+  // To lock a specific joint
+  activate_lock_joint6_                = config.activate_lock_joint6;
+  activate_lock_joint7_                = config.activate_lock_joint7;
+  
+  set_locked_joints_position_ = config.set_locked_joints_position;
+  if (set_locked_joints_position_){
+      franka::RobotState locked_state = state_handle_->getRobotState();
+      Eigen::Map<Eigen::Matrix<double, 7, 1>> q_locked_joints(locked_state.q.data());
+      q_locked_joints_ = q_locked_joints;
+      ROS_INFO_STREAM("Locked Joints Set to: " << q_locked_joints_);
+  }
 }
 
 

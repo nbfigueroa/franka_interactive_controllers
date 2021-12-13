@@ -15,7 +15,6 @@
 #include <ros/time.h>
 #include <Eigen/Dense>
 
-// #include <franka_interactive_controllers/compliance_paramConfig.h>
 #include <franka_interactive_controllers/gravity_compensation_paramConfig.h>
 #include <franka_hw/franka_model_interface.h>
 #include <franka_hw/franka_state_interface.h>
@@ -41,13 +40,20 @@ class JointGravityCompensationController : public controller_interface::MultiInt
   std::unique_ptr<franka_hw::FrankaModelHandle> model_handle_;
   std::vector<hardware_interface::JointHandle> joint_handles_;
 
-  double filter_params_{0.005};
-  double nullspace_stiffness_{20.0};
-  double nullspace_stiffness_target_{20.0};
   const double delta_tau_max_{1.0};
-  Eigen::Matrix<double, 7, 1> q_d_nullspace_;
+
+  // Variables for tool compensation
   bool activate_tool_compensation_;
   Eigen::Matrix<double, 6, 1> tool_compensation_force_;
+
+
+  // Variables for joint locks
+  Eigen::Matrix<double, 7, 1> q_locked_joints_;
+  bool activate_lock_joint6_;
+  bool activate_lock_joint7_;
+  bool set_locked_joints_position_;
+  double k_lock_;
+  
 
   // Dynamic reconfigure
   std::unique_ptr<dynamic_reconfigure::Server<franka_interactive_controllers::gravity_compensation_paramConfig>>
