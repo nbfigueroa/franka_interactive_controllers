@@ -47,8 +47,8 @@ $ rosdep install --from-paths . --ignore-src --rosdistro <your-ros-distro>
     - This will load a joint gravity compensation torque controller that compensates for the weight of any additional tool that is mounted on the robot, as well as controlling for a desired nullspace joint configuration. 
     - The external forces imposed on the end-effector with the additional weight should be defined in ``./config/external_tool_compensation.yaml``. You can  toggle to activate/deactivate this compensation by dynamic recognire online. Default is set to ``true``.
     - The desired nullspace joint configuration should be defined in ``./config/desired_nullspace.yaml``. Stiffness of the nullspace can be modified online by dynamic reconfigure.
-    - This launch file will also load data recording nodes for [easy-kinesthetic-teaching](https://github.com/nbfigueroa/easy-kinesthetic-recording). More details on how to use this teaching can be found in the README file of that repo, see the ``latest-franka`` branch. 
     - To launch ``franka_interactive_bringup.launch`` within this same launch file ``set load_franka_control:=true``. Default is set to ``false``.
+    - - This launch file will also load data recording nodes for [easy-kinesthetic-teaching](https://github.com/nbfigueroa/easy-kinesthetic-recording). More details on how to use this teaching can be found in the README file of that repo, see the ``latest-franka`` branch. To disable this you should set ``load_easy_kinesthetic:=false``. 
 
 **[ROBOT CONTROLLERS]** 
 - To move robot to desired joint configuration (q_goal) with a motion generator and joint impedance control:
