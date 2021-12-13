@@ -31,7 +31,7 @@ $ rosdep install --from-paths . --ignore-src --rosdistro <your-ros-distro>
 ```
  You might need to source the `./bashrc` file and compile again if the first compliation could not find some of the in-house dependencies. If `roscd` doesn't find the compiled packages run `rospack profile`.
 
-
+---
 ## Usage
 **[ROBOT LAUNCH]**   
 - To bring up the standalone robot with [franka_ros](https://frankaemika.github.io/docs/franka_ros.html) (mostly useful for testing and debugging):
