@@ -38,7 +38,7 @@ $ rosdep install --from-paths . --ignore-src --rosdistro <your-ros-distro>
   ```bash
   roslaunch franka_interactive_controllers franka_interactive_bringup.launch 
   ```
-  This will load franka_control functionalities + gripper GUI controller + configured rviz.
+  This will load franka_control functionalities + gripper GUI controller + configured rviz settings.
 
 - To bringup the robot with kinesthetic teaching functionalities:
   ```bash
