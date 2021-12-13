@@ -39,9 +39,9 @@ $ rosdep install --from-paths . --ignore-src --rosdistro <your-ros-distro>
   roslaunch franka_interactive_controllers franka_interactive_bringup.launch 
   ```
   This will load franka_control functionalities + gripper GUI controller + configured rviz settings.
-<p align="center">
-  <img src="doc/img/franka_interactive_bringup.png" width="800x"> 
-</p>
+  <p align="center">
+    <img src="doc/img/franka_interactive_bringup.png" width="600x"> 
+  </p>
 
 - To bringup the robot with kinesthetic teaching functionalities:
   ```bash
@@ -52,6 +52,10 @@ $ rosdep install --from-paths . --ignore-src --rosdistro <your-ros-distro>
     - The desired nullspace joint configuration should be defined in ``./config/desired_nullspace.yaml``. Stiffness of the nullspace can be modified online by dynamic reconfigure.
     - To launch ``franka_interactive_bringup.launch`` within this same launch file ``set load_franka_control:=true``. Default is set to ``false``.
     - This launch file will also load data recording nodes for [easy-kinesthetic-teaching](https://github.com/nbfigueroa/easy-kinesthetic-recording). More details on how to use this teaching can be found in the README file of that repo, see the ``latest-franka`` branch. To disable this you should set ``load_easy_kinesthetic:=false``. Default is set to ``true``.
+
+  <p align="center">
+    <img src="doc/img/franka_kinesthetic_teaching.png" width="600x"> 
+  </p>
 
 **[ROBOT CONTROLLERS]** 
 - To move robot to desired joint configuration (q_goal) with a motion generator and joint impedance control:
