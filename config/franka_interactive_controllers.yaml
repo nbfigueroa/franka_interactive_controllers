@@ -1,3 +1,40 @@
+cartesian_pose_impedance_controller:
+    type: franka_interactive_controllers/CartesianPoseImpedanceController
+    arm_id: panda
+    joint_names:
+        - panda_joint1
+        - panda_joint2
+        - panda_joint3
+        - panda_joint4
+        - panda_joint5
+        - panda_joint6
+        - panda_joint7
+
+cartesian_velocity_impedance_controller:
+    type: franka_interactive_controllers/CartesianVelocityImpedanceController
+    arm_id: panda
+    joint_names:
+        - panda_joint1
+        - panda_joint2
+        - panda_joint3
+        - panda_joint4
+        - panda_joint5
+        - panda_joint6
+        - panda_joint7
+
+joint_gravity_compensation_controller:
+    type: franka_interactive_controllers/JointGravityCompensationController
+    arm_id: panda
+    joint_names:
+        - panda_joint1
+        - panda_joint2
+        - panda_joint3
+        - panda_joint4
+        - panda_joint5
+        - panda_joint6
+        - panda_joint7
+
+
 joint_position_franka_controller:
     type: franka_interactive_controllers/JointPositionFrankaController
     joint_names:
@@ -60,18 +97,6 @@ cartesian_pose_franka_controller:
 cartesian_velocity_franka_controller:
     type: franka_interactive_controllers/CartesianVelocityFrankaController
     arm_id: panda
-
-cartesian_impedance_controller_pose_command:
-    type: franka_interactive_controllers/CartesianImpedancePoseController
-    arm_id: panda
-    joint_names:
-        - panda_joint1
-        - panda_joint2
-        - panda_joint3
-        - panda_joint4
-        - panda_joint5
-        - panda_joint6
-        - panda_joint7
         
 cartesian_force_controller:
     type: franka_interactive_controllers/CartesianForceController

@@ -16,7 +16,8 @@
 #include <franka/robot.h>
 
 // #include "controllers_common.h"
-#include <franka_motion_generators/libfranka_joint_motion_generator.h>
+// #include <franka_motion_generators/libfranka_joint_motion_generator.h>
+#include <libfranka_joint_motion_generator.h>
 
 #include "ros/ros.h"
 
@@ -84,7 +85,7 @@ int main(int argc, char** argv) {
         q_goal = {{-0.024844449233219813, 0.21341741475306059, 0.1671374870475969, -1.9734624159963505, 1.6724220574752517, 2.054275230565774, -0.36437520284810354}};
         break;           
 
-        
+
     }
   
     MotionGenerator motion_generator(0.6, q_goal);

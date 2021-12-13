@@ -74,7 +74,7 @@ if __name__ == "__main__":
     int_marker = InteractiveMarker()
     int_marker.header.frame_id = link_name
     int_marker.scale = 0.3
-    int_marker.name = "desired_pose"
+    int_marker.name = "/cartesian_impedance_controller/desired_pose"
     int_marker.description = ("Desired Pose\nBE CAREFUL! "
                               "If you move the \nequilibrium "
                               "pose the robot will follow it\n"

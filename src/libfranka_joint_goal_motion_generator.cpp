@@ -19,7 +19,8 @@
 #include <franka/rate_limiting.h>
 #include <franka/robot.h>
 
-#include <franka_motion_generators/libfranka_joint_motion_generator.h>
+// #include <franka_motion_generators/libfranka_joint_motion_generator.h>
+#include <libfranka_joint_motion_generator.h>
 
 namespace {
 template <class T, size_t N>

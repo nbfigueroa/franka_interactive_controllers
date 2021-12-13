@@ -58,10 +58,12 @@ int main(int argc, char** argv) {
       // close gripper
       std::cout << "Closing gripper" << std::endl;
       
-      // Creating goal for grasping action with 30N force
+      // Creating goal for grasping action with 50N force
       grasp_goal.width = 0.0;
       grasp_goal.speed = 0.1;
-      grasp_goal.force = 30;
+      grasp_goal.force = 50;
+      grasp_goal.epsilon.inner = 0.2;
+      grasp_goal.epsilon.outer = 0.2;
       ac_grasp.sendGoal(grasp_goal);
       
       //wait for the action to return

@@ -31,6 +31,7 @@ generate_dynamic_reconfigure_options(
   cfg/compliance_param.cfg
   cfg/compliance_full_param.cfg
   cfg/desired_mass_param.cfg
+  cfg/gravity_compensation_param.cfg
 )
 
 catkin_package(
@@ -53,34 +54,37 @@ catkin_package(
   DEPENDS Franka
 )
 
-# AS IN THE DS_MOTION_GENRATOR CMAKELIST
+# DECLARE LIBARY HEADER AND SOURCE FILES
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set(H_FILES ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_pose_franka_controller.h
-            ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_velocity_franka_controller.h
-            ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_impedance_controller_pose_command.h
-#             ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_impedance_controller_velocity_command.h
+set(H_FILES ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_pose_impedance_controller.h
+  #             ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_velocity_impedance_controller.h
 #             ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_passiveDS_impedance_controller.h
+            ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_pose_franka_controller.h
+            ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_velocity_franka_controller.h            
             ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_force_controller.h
-            ${INCLUDE_DIR}/franka_joint_controllers/joint_position_franka_controller.h
-            ${INCLUDE_DIR}/franka_joint_controllers/joint_velocity_franka_controller.h
+            ${INCLUDE_DIR}/franka_joint_controllers/joint_gravity_compensation_controller.h
             ${INCLUDE_DIR}/franka_joint_controllers/joint_impedance_franka_controller.h
+            ${INCLUDE_DIR}/franka_joint_controllers/joint_position_franka_controller.h
+            ${INCLUDE_DIR}/franka_joint_controllers/joint_velocity_franka_controller.h            
             ${INCLUDE_DIR}/franka_motion_generators/libfranka_joint_motion_generator.h
             ${INCLUDE_DIR}/franka_utils/pseudo_inversion.h)
 
 ## Specify locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include/franka_cartesian_controllers include/franka_joint_controllers include/franka_utils ${catkin_INCLUDE_DIRS})
+include_directories(include/franka_cartesian_controllers include/franka_joint_controllers include/franka_motion_generators include/franka_utils ${catkin_INCLUDE_DIRS})
 include_directories(${dynamic_reconfigure_PACKAGE_PATH}/cmake/cfgbuild.cmake)
 
 
 ## Declare a C++ executable
 set(SRCS
+  src/franka_cartesian_controllers/cartesian_pose_impedance_controller.cpp
+#   src/franka_cartesian_controllers/cartesian_impedance_controller_velocity_command.cpp
+#   src/franka_cartesian_controllers/cartesian_passiveDS_impedance_controller.cpp
   src/franka_cartesian_controllers/cartesian_pose_franka_controller.cpp
   src/franka_cartesian_controllers/cartesian_velocity_franka_controller.cpp
   src/franka_cartesian_controllers/cartesian_impedance_controller_pose_command.cpp
-#   src/franka_cartesian_controllers/cartesian_impedance_controller_velocity_command.cpp
-#   src/franka_cartesian_controllers/cartesian_passiveDS_impedance_controller.cpp
   src/franka_cartesian_controllers/cartesian_force_controller.cpp
+  src/franka_joint_controllers/joint_gravity_compensation_controller.cpp
   src/franka_joint_controllers/joint_position_franka_controller.cpp
   src/franka_joint_controllers/joint_velocity_franka_controller.cpp
   src/franka_joint_controllers/joint_impedance_franka_controller.cpp

@@ -1,4 +1,14 @@
 <library path="lib/libfranka_interactive_controllers">
+  <class name="franka_interactive_controllers/CartesianPoseImpedanceController" type="franka_interactive_controllers::CartesianPoseImpedanceController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      A controller that renders a spring damper system in cartesian space. Compliance parameters with the dynamic reconfigure and the desired/equilibrium pose can be modified online via an interactive marker or by publishing a geometry_pose msg to "/cartesian_impedance_controller/desired_pose".
+    </description>
+  </class>
+  <class name="franka_interactive_controllers/JointGravityCompensationController" type="franka_interactive_controllers::JointGravityCompensationController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      A controller that send 0 torques to the robot + coriolis + external tool compensation + nullspace tracking if desired. Nullspace stiffness can be modified onlive via dynamic reconfigure and external tool compensation forces should be defined in .yaml file in ./config folder.
+    </description>
+  </class>
 
   <class name="franka_interactive_controllers/JointPositionFrankaController" type="franka_interactive_controllers::JointPositionFrankaController" base_class_type="controller_interface::ControllerBase">
     <description>
@@ -15,7 +25,6 @@
      CHANGE: A controller that tracks a cartesian path with a joint impedance controller that compensates coriolis torques. The torque commands are compared to measured torques in Console outputs.
     </description>
   </class>
-  
   <class name="franka_interactive_controllers/CartesianPoseFrankaController" type="franka_interactive_controllers::CartesianPoseFrankaController" base_class_type="controller_interface::ControllerBase">
     <description>
       CHANGE: A controller that executes a short motion based on cartesian poses to demonstrate correct usage
@@ -24,11 +33,6 @@
   <class name="franka_interactive_controllers/CartesianVelocityFrankaController" type="franka_interactive_controllers::CartesianVelocityFrankaController" base_class_type="controller_interface::ControllerBase">
     <description>
       CHANGE:A controller that executes a short motion based on cartesian velocities to demonstrate correct usage
-    </description>
-  </class>
-  <class name="franka_interactive_controllers/CartesianImpedancePoseController" type="franka_interactive_controllers::CartesianImpedancePoseController" base_class_type="controller_interface::ControllerBase">
-    <description>
-      CHANGE: A controller that renders a spring damper system in cartesian space. Compliance parameters and the equilibrium pose can be modified online with dynamic reconfigure and an interactive marker respectively.
     </description>
   </class>
   <class name="franka_interactive_controllers/CartesianForceController" type="franka_interactive_controllers::CartesianForceController" base_class_type="controller_interface::ControllerBase">

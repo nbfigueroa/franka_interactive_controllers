@@ -1,6 +1,6 @@
 // Copyright (c) 2017 Franka Emika GmbH
 // Use of this source code is governed by the Apache-2.0 license, see LICENSE
-#include <cartesian_impedance_controller_pose_command.h>
+#include <cartesian_pose_impedance_controller.h>
 
 #include <cmath>
 #include <memory>
@@ -13,29 +13,27 @@
 #include <pseudo_inversion.h>
 #include <hardware_interface/joint_command_interface.h>
 
-// #include "libfranka_joint_motion_generator.h"
-
 namespace franka_interactive_controllers {
 
-bool CartesianImpedancePoseController::init(hardware_interface::RobotHW* robot_hw,
+bool CartesianPoseImpedanceController::init(hardware_interface::RobotHW* robot_hw,
                                                ros::NodeHandle& node_handle) {
   std::vector<double> cartesian_stiffness_vector;
   std::vector<double> cartesian_damping_vector;
 
   sub_desired_pose_ = node_handle.subscribe(
-      "/cartesian_impedance_controller/desired_pose", 20, &CartesianImpedancePoseController::desiredPoseCallback, this,
+      "/cartesian_impedance_controller/desired_pose", 20, &CartesianPoseImpedanceController::desiredPoseCallback, this,
       ros::TransportHints().reliable().tcpNoDelay());
 
   // Getting ROSParams
   std::string arm_id;
   if (!node_handle.getParam("arm_id", arm_id)) {
-    ROS_ERROR_STREAM("CartesianImpedancePoseController: Could not read parameter arm_id");
+    ROS_ERROR_STREAM("CartesianPoseImpedanceController: Could not read parameter arm_id");
     return false;
   }
   std::vector<std::string> joint_names;
   if (!node_handle.getParam("joint_names", joint_names) || joint_names.size() != 7) {
     ROS_ERROR(
-        "CartesianImpedancePoseController: Invalid or no joint_names parameters provided, "
+        "CartesianPoseImpedanceController: Invalid or no joint_names parameters provided, "
         "aborting controller init!");
     return false;
   }
@@ -44,7 +42,7 @@ bool CartesianImpedancePoseController::init(hardware_interface::RobotHW* robot_h
   auto* model_interface = robot_hw->get<franka_hw::FrankaModelInterface>();
   if (model_interface == nullptr) {
     ROS_ERROR_STREAM(
-        "CartesianImpedancePoseController: Error getting model interface from hardware");
+        "CartesianPoseImpedanceController: Error getting model interface from hardware");
     return false;
   }
   try {
@@ -52,7 +50,7 @@ bool CartesianImpedancePoseController::init(hardware_interface::RobotHW* robot_h
         model_interface->getHandle(arm_id + "_model"));
   } catch (hardware_interface::HardwareInterfaceException& ex) {
     ROS_ERROR_STREAM(
-        "CartesianImpedancePoseController: Exception getting model handle from interface: "
+        "CartesianPoseImpedanceController: Exception getting model handle from interface: "
         << ex.what());
     return false;
   }
@@ -60,7 +58,7 @@ bool CartesianImpedancePoseController::init(hardware_interface::RobotHW* robot_h
   auto* state_interface = robot_hw->get<franka_hw::FrankaStateInterface>();
   if (state_interface == nullptr) {
     ROS_ERROR_STREAM(
-        "CartesianImpedancePoseController: Error getting state interface from hardware");
+        "CartesianPoseImpedanceController: Error getting state interface from hardware");
     return false;
   }
   try {
@@ -68,7 +66,7 @@ bool CartesianImpedancePoseController::init(hardware_interface::RobotHW* robot_h
         state_interface->getHandle(arm_id + "_robot"));
   } catch (hardware_interface::HardwareInterfaceException& ex) {
     ROS_ERROR_STREAM(
-        "CartesianImpedancePoseController: Exception getting state handle from interface: "
+        "CartesianPoseImpedanceController: Exception getting state handle from interface: "
         << ex.what());
     return false;
   }
@@ -76,7 +74,7 @@ bool CartesianImpedancePoseController::init(hardware_interface::RobotHW* robot_h
   auto* effort_joint_interface = robot_hw->get<hardware_interface::EffortJointInterface>();
   if (effort_joint_interface == nullptr) {
     ROS_ERROR_STREAM(
-        "CartesianImpedancePoseController: Error getting effort joint interface from hardware");
+        "CartesianPoseImpedanceController: Error getting effort joint interface from hardware");
     return false;
   }
   for (size_t i = 0; i < 7; ++i) {
@@ -84,7 +82,7 @@ bool CartesianImpedancePoseController::init(hardware_interface::RobotHW* robot_h
       joint_handles_.push_back(effort_joint_interface->getHandle(joint_names[i]));
     } catch (const hardware_interface::HardwareInterfaceException& ex) {
       ROS_ERROR_STREAM(
-          "CartesianImpedancePoseController: Exception getting joint handles: " << ex.what());
+          "CartesianPoseImpedanceController: Exception getting joint handles: " << ex.what());
       return false;
     }
   }
@@ -98,7 +96,7 @@ bool CartesianImpedancePoseController::init(hardware_interface::RobotHW* robot_h
 
       dynamic_reconfigure_compliance_param_node_);
   dynamic_server_compliance_param_->setCallback(
-      boost::bind(&CartesianImpedancePoseController::complianceParamCallback, this, _1, _2));
+      boost::bind(&CartesianPoseImpedanceController::complianceParamCallback, this, _1, _2));
 
 
   // Initializing variables
@@ -145,13 +143,16 @@ bool CartesianImpedancePoseController::init(hardware_interface::RobotHW* robot_h
   // Gains for feed-forward damping term
   d_ff_joint_gains_ = Eigen::MatrixXd::Identity(7, 7);
 
+
+  // TODO: This should be read by a .yaml file!
+  activate_tool_compensation_ = true;
   tool_compensation_force_.setZero();
   tool_compensation_force_ << 0.46, -0.17, -1.64, 0, 0, 0;
 
   return true;
 }
 
-void CartesianImpedancePoseController::starting(const ros::Time& /*time*/) {
+void CartesianPoseImpedanceController::starting(const ros::Time& /*time*/) {
   // compute initial velocity with jacobian and set x_attractor and q_d_nullspace
   // to initial configuration
   
@@ -175,7 +176,7 @@ void CartesianImpedancePoseController::starting(const ros::Time& /*time*/) {
   q_d_nullspace_ = q_initial;
 }
 
-void CartesianImpedancePoseController::update(const ros::Time& /*time*/,
+void CartesianPoseImpedanceController::update(const ros::Time& /*time*/,
                                                  const ros::Duration& /*period*/) {
   // get state variables
   franka::RobotState robot_state = state_handle_->getRobotState();
@@ -277,15 +278,16 @@ void CartesianImpedancePoseController::update(const ros::Time& /*time*/,
                         (2.0 * sqrt(nullspace_stiffness_)) * dq);
 
   // Compute tool compensation (scoop/camera in scooping task)
-  tau_tool << jacobian.transpose() * tool_compensation_force_;
+  if (activate_tool_compensation_)
+    tau_tool << jacobian.transpose() * tool_compensation_force_;
+  else
+    tau_tool.setZero();
 
   // Desired torque
   tau_d << tau_task + tau_nullspace + coriolis - tau_tool;
-  // tau_d.setZero();
 
   // Saturate torque rate to avoid discontinuities
   tau_d << saturateTorqueRate(tau_d, tau_J_d);
-  // ROS_INFO_STREAM ("tau_desired:" << std::endl << tau_d); 
 
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_d(i));
@@ -303,7 +305,7 @@ void CartesianImpedancePoseController::update(const ros::Time& /*time*/,
   orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
 }
 
-Eigen::Matrix<double, 7, 1> CartesianImpedancePoseController::saturateTorqueRate(
+Eigen::Matrix<double, 7, 1> CartesianPoseImpedanceController::saturateTorqueRate(
     const Eigen::Matrix<double, 7, 1>& tau_d_calculated,
     const Eigen::Matrix<double, 7, 1>& tau_J_d) {  // NOLINT (readability-identifier-naming)
   Eigen::Matrix<double, 7, 1> tau_d_saturated{};
@@ -315,7 +317,7 @@ Eigen::Matrix<double, 7, 1> CartesianImpedancePoseController::saturateTorqueRate
   return tau_d_saturated;
 }
 
-void CartesianImpedancePoseController::complianceParamCallback(
+void CartesianPoseImpedanceController::complianceParamCallback(
     franka_interactive_controllers::compliance_paramConfig& config,
     uint32_t /*level*/) {
   cartesian_stiffness_target_.setIdentity();
@@ -331,9 +333,11 @@ void CartesianImpedancePoseController::complianceParamCallback(
   cartesian_damping_target_.bottomRightCorner(3, 3)
       << 2.0 * sqrt(config.rotational_stiffness) * Eigen::Matrix3d::Identity();
   nullspace_stiffness_target_ = config.nullspace_stiffness;
+
+  activate_tool_compensation_ = config.activate_tool_compensation;
 }
 
-void CartesianImpedancePoseController::desiredPoseCallback(
+void CartesianPoseImpedanceController::desiredPoseCallback(
     const geometry_msgs::PoseStampedConstPtr& msg) {
 
   position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
@@ -349,5 +353,5 @@ void CartesianImpedancePoseController::desiredPoseCallback(
 
 }  // namespace franka_interactive_controllers
 
-PLUGINLIB_EXPORT_CLASS(franka_interactive_controllers::CartesianImpedancePoseController,
+PLUGINLIB_EXPORT_CLASS(franka_interactive_controllers::CartesianPoseImpedanceController,
                        controller_interface::ControllerBase)
