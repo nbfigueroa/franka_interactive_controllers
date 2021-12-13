@@ -38,6 +38,35 @@ bool CartesianPoseImpedanceController::init(hardware_interface::RobotHW* robot_h
     return false;
   }
 
+  // Initialize variables for tool compensation from yaml config file
+  activate_tool_compensation_ = true;
+  tool_compensation_force_.setZero();
+  std::vector<double> external_tool_compensation;
+  // tool_compensation_force_ << 0.46, -0.17, -1.64, 0, 0, 0;  //read from yaml
+  if (!node_handle.getParam("external_tool_compensation", external_tool_compensation) || external_tool_compensation.size() != 6) {
+      ROS_ERROR(
+          "CartesianPoseImpedanceController: Invalid or no external_tool_compensation parameters provided, "
+          "aborting controller init!");
+      return false;
+    }
+  for (size_t i = 0; i < 6; ++i) 
+    tool_compensation_force_[i] = external_tool_compensation.at(i);
+  ROS_INFO_STREAM("External tool compensation force: " << std::endl << tool_compensation_force_);
+
+  // Initialize variables for nullspace control from yaml config file
+  q_d_nullspace_.setZero();
+  std::vector<double> q_nullspace;
+  if (!node_handle.getParam("q_nullspace", q_nullspace) || q_nullspace.size() != 7) {
+      ROS_ERROR(
+          "CartesianPoseImpedanceController: Invalid or no q_nullspace parameters provided, "
+          "aborting controller init!");
+      return false;
+    }
+  for (size_t i = 0; i < 7; ++i) 
+    q_d_nullspace_[i] = q_nullspace.at(i);
+  ROS_INFO_STREAM("Desired nullspace position: " << std::endl << q_d_nullspace_);
+
+
   // Getting libranka control interfaces
   auto* model_interface = robot_hw->get<franka_hw::FrankaModelInterface>();
   if (model_interface == nullptr) {
@@ -144,18 +173,11 @@ bool CartesianPoseImpedanceController::init(hardware_interface::RobotHW* robot_h
   d_ff_joint_gains_ = Eigen::MatrixXd::Identity(7, 7);
 
 
-  // TODO: This should be read by a .yaml file!
-  activate_tool_compensation_ = true;
-  tool_compensation_force_.setZero();
-  tool_compensation_force_ << 0.46, -0.17, -1.64, 0, 0, 0;
-
   return true;
 }
 
 void CartesianPoseImpedanceController::starting(const ros::Time& /*time*/) {
-  // compute initial velocity with jacobian and set x_attractor and q_d_nullspace
-  // to initial configuration
-  
+
   // Get robot current/initial joint state
   franka::RobotState initial_state = state_handle_->getRobotState();
   Eigen::Map<Eigen::Matrix<double, 7, 1>> q_initial(initial_state.q.data());
@@ -173,7 +195,7 @@ void CartesianPoseImpedanceController::starting(const ros::Time& /*time*/) {
   orientation_d_target_ = Eigen::Quaterniond(initial_transform.linear());
 
   // set nullspace desired configuration to initial q
-  q_d_nullspace_ = q_initial;
+  // q_d_nullspace_ = q_initial;
 }
 
 void CartesianPoseImpedanceController::update(const ros::Time& /*time*/,

@@ -10,7 +10,7 @@ Panels:
         - /TF1/Frames1
         - /WrenchStamped1
       Splitter Ratio: 0.5
-    Tree Height: 444
+    Tree Height: 352
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -281,5 +281,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 842
-  X: 266
+  X: 243
   Y: 27

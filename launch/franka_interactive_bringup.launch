@@ -15,6 +15,7 @@
   <node name="franka_to_geometry_messages" pkg="franka_interactive_controllers" type="franka_to_geometry_messages.py" respawn="false" output="screen"/>
 
   <!-- Loads controller parameters -->  
+  <rosparam command="load" file="$(find franka_interactive_controllers)/config/impedance_control_additional_params.yaml"/> 
   <rosparam command="load" file="$(find franka_interactive_controllers)/config/franka_interactive_controllers.yaml" />
 
   <!-- Bring up rqt_reconfigure to modify values -->
