@@ -30,9 +30,13 @@ $ rosdep install --from-paths . --ignore-src --rosdistro <your-ros-distro>
   $ rospack profile
 ```
  You might need to source the `./bashrc` file and compile again if the first compliation could not find some of the in-house dependencies. If `roscd` doesn't find the compiled packages run `rospack profile`.
-
+ 
 ---
 ## Usage
+
+**Robot Startup instructions found [here](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/robot_startup.md).**
+
+
 **[ROBOT LAUNCH]**   
 - To bring up the standalone robot with [franka_ros](https://frankaemika.github.io/docs/franka_ros.html) (useful for testing -- can be included in your custom launch file):
   ```bash
