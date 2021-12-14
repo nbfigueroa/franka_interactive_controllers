@@ -33,7 +33,7 @@ rostopic echo /franka_state_controller/F_ext
 This is the topic being displayed in the terminal below:
 
   <p align="center">
-    <img src="doc/img/external_tool_compensation_1.png" width="600x"> 
+    <img src="../img/external_compensation_tool_2.png" width="700x"> 
   </p>
 
 3. Depending on the tool, mount it and close the gripper fingers (gui for gripper control pops up with launch file, if it doesn't you're doing something wrong). For the scoop tool this is how it should look like:
@@ -42,7 +42,7 @@ IMAGE HERE
 4. Measure the external forces again (Repeat Step 2):
 
   <p align="center">
-    <img src="doc/img/external_tool_compensation_1.png" width="600x"> 
+    <img src="../img/external_tool_compensation_1.png" width="700x"> 
   </p>
 
 
@@ -56,7 +56,7 @@ This assumes ``franka_interactive_bringup.launch`` is loaded in another terminal
 
 
   <p align="center">
-    <img src="doc/img/franka_joint_gravity_compensation.png" width="600x"> 
+    <img src="../img/franka_joint_gravity_compensation.png" width="700x"> 
   </p>
 
 - If the robot does not move and you can physically guide it and it does not move by itself then calibration works. If you move the robot and it keeps moving when you release it you might need to add force values in some directions and this requires a more systematic calibration scheme. However, it should be too difficult to find the correct values. 
