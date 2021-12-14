@@ -32,14 +32,19 @@ rostopic echo /franka_state_controller/F_ext
 ```
 This is the topic being displayed in the terminal below:
 
-IMAGE HERE
+  <p align="center">
+    <img src="doc/img/external_tool_compensation_1.png" width="600x"> 
+  </p>
 
 3. Depending on the tool, mount it and close the gripper fingers (gui for gripper control pops up with launch file, if it doesn't you're doing something wrong). For the scoop tool this is how it should look like:
 IMAGE HERE
 
 4. Measure the external forces again (Repeat Step 2):
 
-IMAGE HERE
+  <p align="center">
+    <img src="doc/img/external_tool_compensation_1.png" width="600x"> 
+  </p>
+
 
 5. Now you have ``F_ext`` before and after mounting the tool, take the difference F_ext^{tool} = (F_ext^{with tool} - F_ext^{no tool}) and fill in the value in [./config/impedance_control_additional_params.yaml](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/config/impedance_control_additional_params.yaml).
 
@@ -50,7 +55,11 @@ roslaunch franka_interactive_controllers joint_gravity_compensation_controller.l
 This assumes ``franka_interactive_bringup.launch`` is loaded in another terminal, otherwise set ``load_franka_control:=true``.
 
 
-- If the robot does not move and you can physically guide it and it does not move by itself then calibration works. If you move the robot and it keeps moving when you release it you might need to add force values in some directions and this requires a more systematic calibration scheme. 
+  <p align="center">
+    <img src="doc/img/franka_joint_gravity_compensation.png" width="600x"> 
+  </p>
+
+- If the robot does not move and you can physically guide it and it does not move by itself then calibration works. If you move the robot and it keeps moving when you release it you might need to add force values in some directions and this requires a more systematic calibration scheme. However, it should be too difficult to find the correct values. 
 
 - You can also untick the ``activate_tool_compensation`` to see how the robot behaves without these compensation forces. If there is no external tool, the robot will not move, but if there is the robot should fall downwards. 
 
