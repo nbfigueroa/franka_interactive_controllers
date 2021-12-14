@@ -34,7 +34,7 @@ $ rosdep install --from-paths . --ignore-src --rosdistro <your-ros-distro>
 ---
 ## Usage
 **[ROBOT LAUNCH]**   
-- To bring up the standalone robot with [franka_ros](https://frankaemika.github.io/docs/franka_ros.html) (mostly useful for testing and debugging):
+- To bring up the standalone robot with [franka_ros](https://frankaemika.github.io/docs/franka_ros.html) (useful for testing, debugging and include in your custom launchg file):
   ```bash
   roslaunch franka_interactive_controllers franka_interactive_bringup.launch 
   ```
