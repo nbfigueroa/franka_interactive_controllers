@@ -17,7 +17,7 @@ To get these values for your tool, follow the steps below (normally with ``[f_x,
 ```bash
 rosrun franka_interactive_controllers libfranka_joint_goal_motion_generator 1
 ```
-The robot should go to this position:
+The robot should go to this position:  
 IMAGE HERE
 
 2. Bringup franka_control by launching the main robot launch file:
@@ -42,3 +42,15 @@ IMAGE HERE
 IMAGE HERE
 
 5. Now you have ``F_ext`` before and after mounting the tool, take the difference F_ext^{tool} = (F_ext^{with tool} - F_ext^{no tool}) and fill in the value in [./config/impedance_control_additional_params.yaml](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/config/impedance_control_additional_params.yaml).
+
+6. To verify calibration is correct you can run the joint gravity compensation controller as follows:
+```bash
+roslaunch franka_interactive_controllers joint_gravity_compensation_controller.launch
+```
+This assumes ``franka_interactive_bringup.launch`` is loaded in another terminal, otherwise set ``load_franka_control:=true``.
+
+
+- If the robot does not move and you can physically guide it and it does not move by itself then calibration works. If you move the robot and it keeps moving when you release it you might need to add force values in some directions and this requires a more systematic calibration scheme. 
+
+- You can also untick the ``activate_tool_compensation`` to see how the robot behaves without these compensation forces. If there is no external tool, the robot will not move, but if there is the robot should fall downwards. 
+
