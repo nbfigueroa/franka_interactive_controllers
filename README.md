@@ -55,7 +55,7 @@ $ rosdep install --from-paths . --ignore-src --rosdistro <your-ros-distro>
     <p align="center">
         <img src="doc/img/franka_joint_gravity_compensation.png" width="600x"> 
     </p>
-    - If you run this script and the robot moves by itself, that means that your external_tool_compensation forces are incorrect. See [instructions](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/external_tool_compensation.md) to correct it. 
+    - If you run this script and the robot moves by itself, that means that your external_tool_compensation forces are incorrect. See instructions [here](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/external_tool_compensation.md) to correct it. 
     
 - To load a cartesian impedance controller with pose command, launcg the following:
   ```bash
