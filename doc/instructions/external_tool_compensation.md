@@ -31,20 +31,18 @@ You should see these values by echoing the ``F_ext`` topic:
 rostopic echo /franka_state_controller/F_ext
 ```
 This is the topic being displayed in the terminal below:
-
   <p align="center">
-    <img src="../img/external_compensation_tool_2.png" width="700x"> 
+    <img src="../img/external_tool_compensation_1.png" width="700x"> 
   </p>
+
 
 3. Depending on the tool, mount it and close the gripper fingers (gui for gripper control pops up with launch file, if it doesn't you're doing something wrong). For the scoop tool this is how it should look like:
 IMAGE HERE
 
 4. Measure the external forces again (Repeat Step 2):
-
   <p align="center">
-    <img src="../img/external_tool_compensation_1.png" width="700x"> 
+    <img src="../img/external_compensation_tool_2.png" width="700x"> 
   </p>
-
 
 5. Now you have ``F_ext`` before and after mounting the tool, take the difference F_ext^{tool} = (F_ext^{with tool} - F_ext^{no tool}) and fill in the value in [./config/impedance_control_additional_params.yaml](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/config/impedance_control_additional_params.yaml).
 
