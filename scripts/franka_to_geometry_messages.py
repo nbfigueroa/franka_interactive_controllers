@@ -25,12 +25,11 @@ class FrankaStatesConverter:
 
     def convert_to_geometry_msg(self, state_msg):
         """ publishes franka states as geometry msgs """
-        # rospy.loginfo("converting")
+        
+        
+        # Tip of finger gripper
         O_T_EE = np.array(state_msg.O_T_EE).reshape(4, 4).T
-        F_T_EE = np.array(state_msg.F_T_EE).reshape(4, 4).T
-
-        quat_ee = self.q_from_R(O_T_EE[:3, :3])
-        quat_fl = self.q_from_R(F_T_EE[:3, :3])
+        quat_ee = self.q_from_R(O_T_EE[:3, :3])        
 
         msg_o_t_ee = PoseStamped()
         msg_o_t_ee.header.stamp = state_msg.header.stamp
@@ -43,18 +42,21 @@ class FrankaStatesConverter:
         msg_o_t_ee.pose.orientation.z = quat_ee[2]
         msg_o_t_ee.pose.orientation.w = quat_ee[3]
 
-		# TODO: need to use correct transform to place this on flange
-		#       using 'panda_link8' as frame_id is a hack.
+        # Flange of robot
+        F_T_EE_ = np.array(state_msg.F_T_EE).reshape(4, 4).T
+        F_T_EE = np.asmatrix(O_T_EE) * np.linalg.inv(np.asmatrix(F_T_EE_))
+        quat_fl = self.q_from_R(F_T_EE_[:3, :3])
+
         msg_o_t_fl = PoseStamped()
         msg_o_t_fl.header.stamp = state_msg.header.stamp
-        msg_o_t_fl.header.frame_id = "panda_link8"
+        msg_o_t_fl.header.frame_id = "panda_link0"
         msg_o_t_fl.pose.position.x = F_T_EE[0, 3]
         msg_o_t_fl.pose.position.y = F_T_EE[1, 3]
         msg_o_t_fl.pose.position.z = F_T_EE[2, 3]
-        msg_o_t_fl.pose.orientation.x = quat_fl[0]
-        msg_o_t_fl.pose.orientation.y = quat_fl[1]
-        msg_o_t_fl.pose.orientation.z = quat_fl[2]
-        msg_o_t_fl.pose.orientation.w = quat_fl[3]
+        msg_o_t_fl.pose.orientation.x = quat_ee[0]
+        msg_o_t_fl.pose.orientation.y = quat_ee[1]
+        msg_o_t_fl.pose.orientation.z = quat_ee[2]
+        msg_o_t_fl.pose.orientation.w = quat_ee[3]
 
         self.pub_eeff.publish(msg_o_t_ee)
         self.pub_eeff_flange.publish(msg_o_t_fl)

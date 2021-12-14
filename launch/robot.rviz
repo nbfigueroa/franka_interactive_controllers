@@ -4,13 +4,9 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Global Options1
-        - /Status1
-        - /RobotModel1
         - /TF1/Frames1
-        - /WrenchStamped1
       Splitter Ratio: 0.5
-    Tree Height: 298
+    Tree Height: 352
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -137,13 +133,13 @@ Visualization Manager:
       Frames:
         All Enabled: false
         panda_EE:
-          Value: true
+          Value: false
         panda_K:
           Value: false
         panda_NE:
           Value: false
         panda_hand:
-          Value: true
+          Value: false
         panda_leftfinger:
           Value: false
         panda_link0:
@@ -193,6 +189,38 @@ Visualization Manager:
                               {}
       Update Interval: 0
       Value: true
+    - Alpha: 1
+      Axes Length: 0.07500000298023224
+      Axes Radius: 0.009999999776482582
+      Class: rviz/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Pose
+      Queue Size: 10
+      Shaft Length: 1
+      Shaft Radius: 0.05000000074505806
+      Shape: Axes
+      Topic: /franka_state_controller/O_T_EE
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Axes Length: 0.07500000298023224
+      Axes Radius: 0.009999999776482582
+      Class: rviz/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Pose
+      Queue Size: 10
+      Shaft Length: 1
+      Shaft Radius: 0.05000000074505806
+      Shape: Axes
+      Topic: /franka_state_controller/O_T_FL
+      Unreliable: false
+      Value: true
     - Alpha: 0.5
       Arrow Width: 0.25
       Class: rviz/WrenchStamped
@@ -217,6 +245,23 @@ Visualization Manager:
       Show Visual Aids: false
       Update Topic: /desired_pose_marker/update
       Value: false
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /franka_grasped_object
+      Name: Marker
+      Namespaces:
+        "": true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /franka_trajectory_marker
+      Name: Marker
+      Namespaces:
+        breadcrumb: true
+        path: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 238; 238; 236
@@ -245,7 +290,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.416724681854248
+      Distance: 1.5725371837615967
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -261,9 +306,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.2753976583480835
+      Pitch: 0.16039790213108063
       Target Frame: <Fixed Frame>
-      Yaw: 5.303579330444336
+      Yaw: 5.828582286834717
     Saved: ~
 Window Geometry:
   Displays:
