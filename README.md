@@ -55,7 +55,7 @@ $ rosdep install --from-paths . --ignore-src --rosdistro <your-ros-distro>
     <p align="center">
         <img src="doc/img/franka_joint_gravity_compensation.png" width="600x"> 
     </p>
-    - If you run this script and the robot moves by itself, that means that your external_tool_compensation forces are incorrect. See instructions [here](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/external_tool_compensation.md) to correct it. 
+    - If you run this script and the robot moves by itself, that means that your external_tool_compensation forces are incorrect. See instructions to correct it. 
     
 - To load a cartesian impedance controller with pose command, launcg the following:
   ```bash
@@ -89,9 +89,9 @@ rosrun franka_interactive_controllers franka_gui_gripper_run.py
     - This lu
     - This launch file will also load data recording nodes for [easy-kinesthetic-teaching](https://github.com/nbfigueroa/easy-kinesthetic-recording). More details on how to use this teaching can be found in the README file of that repo, see the ``latest-franka`` branch. To disable this you should set ``load_easy_kinesthetic:=false``. Default is set to ``true``.
 
-  <p align="center">
+<!--   <p align="center">
     <img src="doc/img/franka_kinesthetic_teaching.png" width="600x"> 
-  </p>
+  </p> -->
 
 
 **[LIBFRANKA CONTROLLERS]**   
