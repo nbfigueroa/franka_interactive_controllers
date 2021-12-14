@@ -89,7 +89,7 @@ We also include some controllers for **joint motion generator to a goal and the 
   ```bash
   rosrun franka_interactive_controllers libfranka_joint_goal_motion_generator <goal_id>
   ```
-  See cpp file for ``q_goal`` definitions, you can replace or add more as you like, you should only recompile.
+  See [cpp file](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/src/libfranka_joint_goal_motion_generator.cpp) for ``q_goal`` definitions, you can replace or add more as you like, you should only recompile.
 - Open/Close gripper (same as above but withou the actionlib interface, using ONLY [libfranka](https://frankaemika.github.io/docs/libfranka.html)):
   ```bash
   rosrun franka_interactive_controllers libfranka_gui_gripper_run.py
