@@ -38,7 +38,7 @@ $ rosdep install --from-paths . --ignore-src --rosdistro <your-ros-distro>
   ```bash
   roslaunch franka_interactive_controllers franka_interactive_bringup.launch 
   ```
-  This will load franka_control functionalities + gripper GUI controller + configured rviz settings.
+  This will load all franka_ros(franka_control, franaka_gripper, etc.) functionalities + gripper GUI controller + configured rviz settings.
   <p align="center">
     <img src="doc/img/franka_interactive_bringup.png" width="600x"> 
   </p>
