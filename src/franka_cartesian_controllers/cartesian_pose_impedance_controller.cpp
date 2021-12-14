@@ -1,5 +1,8 @@
+// This code was derived from franka_example controllers
 // Copyright (c) 2017 Franka Emika GmbH
-// Use of this source code is governed by the Apache-2.0 license, see LICENSE
+// Use of this source code is governed by the Apache-2.0 license.
+// Current development and modification of this code by Nadia Figueroa (MIT) 2021.
+
 #include <cartesian_pose_impedance_controller.h>
 
 #include <cmath>
@@ -193,9 +196,6 @@ void CartesianPoseImpedanceController::starting(const ros::Time& /*time*/) {
   orientation_d_        = Eigen::Quaterniond(initial_transform.linear());
   position_d_target_    = initial_transform.translation();
   orientation_d_target_ = Eigen::Quaterniond(initial_transform.linear());
-
-  // set nullspace desired configuration to initial q
-  // q_d_nullspace_ = q_initial;
 }
 
 void CartesianPoseImpedanceController::update(const ros::Time& /*time*/,
