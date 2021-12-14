@@ -49,9 +49,10 @@ $ rosdep install --from-paths . --ignore-src --rosdistro <your-ros-distro>
   roslaunch franka_interactive_controllers joint_gravity_compensation_controller.launch
   ```
     - This will load a joint gravity compensation torque controller that compensates for the weight of any additional tool (i.e., a tool grasped by the hand or cameras mounted on the gripper, that is mounted on the robot, as well as the capability to lock certain joints for ease of demonstration. 
-    - The external forces imposed on the end-effector with the additional weight should be defined in ``./config/external_tool_compensation.yaml``. Instructions on how to find these values for your custom tool are provided [here](). You can toggle to activate/deactivate this compensation online using dynamic reconfigure. Default is set to ``true``.
+    - The external forces imposed on the end-effector with the additional weight should be defined in ``./config/external_tool_compensation.yaml``. Instructions on how to finding values for your custom tool [here](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/external_tool_compensation.md). You can toggle to activate/deactivate this compensation online using dynamic reconfigure. Default is set to ``true``.
     - The desired joints to lock and the locked positions can be modified online by dynamic reconfigure. Default is set to ``false`` for all locks.
     - To launch ``franka_interactive_bringup.launch`` within this same launch file ``set load_franka_control:=true``. Default is set to ``false``.
+    
 - To load a cartesian impedance controller with pose command, launcg the following:
   ```bash
   roslaunch franka_interactive_controllers cartesian_pose_impedance_controller.launch
