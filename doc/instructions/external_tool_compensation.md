@@ -18,7 +18,11 @@ To get these values for your tool, follow the steps below (normally with ``[f_x,
 rosrun franka_interactive_controllers libfranka_joint_goal_motion_generator 1
 ```
 The robot should go to this position:  
-IMAGE HERE
+
+  <p align="center">
+    <img src="https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/img/robot_gripper_1.jpg" width="700x"> 
+  </p>
+
 
 2. Bringup franka_control by launching the main robot launch file:
 ```bash
@@ -37,7 +41,12 @@ This is the topic being displayed in the terminal below:
 
 
 3. Depending on the tool, mount it and close the gripper fingers (gui for gripper control pops up with launch file, if it doesn't you're doing something wrong). For the scoop tool this is how it should look like:
-IMAGE HERE
+
+  <p align="center">
+    <img src="https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/img/robot_gripper_2.jpg" width="700x"> 
+  </p>
+
+
 
 4. Measure the external forces again (Repeat Step 2):
   <p align="center">
