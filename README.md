@@ -4,7 +4,7 @@ Control interface built on top of [franka_ros](https://frankaemika.github.io/doc
 
 ---
 ## Installation
-Besides[franka_ros](https://frankaemika.github.io/docs/franka_ros.html) this package depends on several other code repositories that are robot-agnostic. To install this repo and all its dependencies do the following steps:
+Besides [franka_ros](https://frankaemika.github.io/docs/franka_ros.html) this package depends on several other code repositories that are robot-agnostic. To install this repo and all its dependencies do the following steps:
 * In your catkin src directory clone the repository
 ```
 $ git clone https://github.com/nbfigueroa/franka_interactive_controllers.git
