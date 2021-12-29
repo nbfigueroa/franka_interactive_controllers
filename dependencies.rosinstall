@@ -7,8 +7,4 @@
     uri: https://github.com/nbfigueroa/easy-kinesthetic-recording
     branch: latest-franka
     
-- git:
-    local-name: robot_velocity_filters
-    uri: https://github.com/nbfigueroa/robot_velocity_filters.git
-    
     
