@@ -80,6 +80,7 @@ You can launch the [joint gravity compensation controller](https://github.com/nb
 roslaunch franka_interactive_controllers franka_kinesthetic_teaching.launch
 ```
 
+If you installed and compiled everything correctly you should see the following windows on your screen:
 <p align="center">
     <img src="doc/img/franka_kinesthetic_teaching.png" width="800x"> 
 </p> 
@@ -103,7 +104,7 @@ roslaunch franka_interactive_controllers cartesian_pose_impedance_controller.lau
 This launch file will load a [cartesian impedance controller](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/src/franka_cartesian_controllers/cartesian_pose_impedance_controller.cpp) that:
 - Takes as input a desired end-effector pose (position and orientation) as a ``geometry_msg::PoseStamped`` with topic name ``/cartesian_impedance_controller_pose_command/desired_pose``.
 - Will compensate for external forces imposed by additional tools/accesories mounted on the gripper (as described in joint gravity compensation controller above).
-- Control for a desired nullspace configuration, defined in  [config/impedance_control_additional_params.yaml](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/config/impedance_control_additional_params.yaml)
+- Control for a desired nullspace configuration, defined in  [config/impedance_control_additional_params.yaml](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/config/impedance_control_additional_params.yaml), stiffness for nullspace control can be modified online by dynamic reconfigure.
 
 #### Cartesian Impedance Controller with Twist Command
 ```bash
