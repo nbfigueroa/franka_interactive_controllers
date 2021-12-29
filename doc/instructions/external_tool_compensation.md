@@ -1,6 +1,6 @@
 # External tool compensation instructions
 
-Whenever external tools are mounted on the franka hand, we need to compensate for these additional external forces in order to properly control the robot in the following modes:
+Whenever external tools/accesories (like cameras) are mounted on the franka hand, we need to compensate for these additional external forces in order to properly control the robot in the following modes:
 - gravity compensation
 - joint impedance
 - cartesian impedance
