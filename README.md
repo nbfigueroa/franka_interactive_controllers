@@ -38,7 +38,7 @@ $ rosdep install --from-paths . --ignore-src --rosdistro <your-ros-distro>
 
 We include a list of instructions for how to start using the franka panda arm with this controller package:
 - [Startup the robot](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/robot_startup.md)
-- [External tool compensation](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/external_tool_compensation.md)
+- [External tool compensation](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/external_tool_compensation.md) (necessary if your experiment requires mounting a tool/accesory on the franka hand)
 - [Basic robot operating functionalities](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/basic_robot_control.md) (open/close gripper and move robot to a desired joint position bypassing franka_ros -- useful to startup an experiment).
 - [Kinesthetic Teaching/Recording](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/kinesthetic_teaching_recording.md)
 - Learning DS motion policies
