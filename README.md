@@ -40,7 +40,7 @@ We include a list of instructions for how to start using the franka panda arm wi
 - [Startup the robot](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/robot_startup.md)
 - [External tool compensation](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/external_tool_compensation.md)
 - Basic robot operating functionalities
-- Kinesthetic Teaching
+- Kinesthetic Teaching/Recording
 - Learning DS motion policies
 - Executing DS motion policies
 
@@ -52,7 +52,7 @@ To bring up the standalone robot with [franka_ros](https://frankaemika.github.io
 ```bash
 roslaunch franka_interactive_controllers franka_interactive_bringup.launch 
 ```
-This will load all franka_ros (franka_control, franaka_gripper, etc.) functionalities + gripper GUI controller + configured rviz settings.
+This will load all franka_ros (franka_control, franka_gripper, etc.) functionalities + gripper GUI controller + configured rviz settings.
 <p align="center">
   <img src="doc/img/franka_interactive_bringup.png" width="600x"> 
 </p>
