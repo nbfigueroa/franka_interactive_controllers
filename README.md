@@ -39,8 +39,8 @@ $ rosdep install --from-paths . --ignore-src --rosdistro <your-ros-distro>
 We include a list of instructions for how to start using the franka panda arm with this controller package:
 - [Startup the robot](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/robot_startup.md)
 - [External tool compensation](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/external_tool_compensation.md)
-- Basic robot operating functionalities
-- Kinesthetic Teaching/Recording
+- [Basic robot operating functionalities](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/basic_robot_control.md) (open/close gripper and moving robot to a desired joint position bypassing franka_ros).
+- [Kinesthetic Teaching/Recording](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/kinesthetic_teaching_recording.md)
 - Learning DS motion policies
 - Executing DS motion policies
 
@@ -54,7 +54,7 @@ roslaunch franka_interactive_controllers franka_interactive_bringup.launch
 ```
 This will load all franka_ros (franka_control, franka_gripper, etc.) functionalities + gripper GUI controller + configured rviz settings.
 <p align="center">
-  <img src="doc/img/franka_interactive_bringup.png" width="600x"> 
+  <img src="doc/img/franka_interactive_bringup.png" width="700x"> 
 </p>
 
 ### Robot Controllers
@@ -68,76 +68,56 @@ roslaunch franka_interactive_controllers joint_gravity_compensation_controller.l
   - The desired joints to lock and the locked positions can be modified online by dynamic reconfigure. Default is set to ``false`` for all locks.
   - To launch ``franka_interactive_bringup.launch`` within this same launch file ``set load_franka_control:=true``. Default is set to ``false``.
   <p align="center">
-      <img src="doc/img/franka_joint_gravity_compensation.png" width="600x"> 
+      <img src="doc/img/franka_joint_gravity_compensation.png" width="700x"> 
   </p>
 
 **NOTE: If you run this script and the robot moves by itself, that means that your external_tool_compensation forces are incorrect. See external_tool_compensation instructions to correct it.** 
 
 #### Kinesthetic Teaching/Recording Pipeline
-You can launch the [joint gravity compensation controller](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/src/franka_joint_controllers/joint_gravity_compensation_controller.cpp) together with data recording nodes from my [easy-kinesthetic-teaching](https://github.com/nbfigueroa/easy-kinesthetic-recording) repository. 
+You can launch the [joint gravity compensation controller](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/src/franka_joint_controllers/joint_gravity_compensation_controller.cpp) together with data recording nodes from my [easy-kinesthetic-teaching](https://github.com/nbfigueroa/easy-kinesthetic-recording) repository ``latest-franka`` branch. 
 
 ```bash
 roslaunch franka_interactive_controllers franka_kinesthetic_teaching.launch
 ```
 
 <p align="center">
-    <img src="doc/img/franka_kinesthetic_teaching.png" width="600x"> 
+    <img src="doc/img/franka_kinesthetic_teaching.png" width="800x"> 
 </p> 
 
 
 This will run scripts and nodes that will allow you to:
-- Select topics to record and define path to save rosbags; see README of [easy-kinesthetic-recording](https://github.com/nbfigueroa/easy-kinesthetic-recording) for instructions on which launch file to define this.
+- Select topics to record and define path to save rosbags.
 - Run all functionalities from [joint gravity compensation controller](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/src/franka_joint_controllers/joint_gravity_compensation_controller.cpp).
-- Bringup rosservice to record/stop a recording, see README of [easy-kinesthetic-recording](https://github.com/nbfigueroa/easy-kinesthetic-recording) for instructions (can be triggered by command line or GUI).
+- Bringup rosservice to record/stop a recording.
 - Visualize end-effector trajectories being recorded in real-time and gripper state (open/closed).
-- Replay recorded end-effector trajectoriers and gripper state in RViz, franka controllers and launch files must be turned off for this functionality, see README of [easy-kinesthetic-recording](https://github.com/nbfigueroa/easy-kinesthetic-recording) for instructions on which launch file to define this.
+- Replay recorded end-effector trajectoriers and gripper state in RViz, franka controllers and launch files must be turned off for this functionality.
 
-More details on how to use this teaching interface can be found in the README file of that repo, see the ``latest-franka`` branch.
+See [Kinesthetic Teaching/Recording](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/kinesthetic_teaching_recording.md) instructions for definitions and usage.
 
 
-#### Cartesian Impedance with Pose Command
-To load a cartesian impedance controller with pose command, launch the following:
+#### Cartesian Impedance Controller with Pose Command
+To load a cartesian impedance controller with pose command (a PD control law with position error tracking; i.e., **stiffness control** and velocity damping) launch the following:
 ```bash
 roslaunch franka_interactive_controllers cartesian_pose_impedance_controller.launch
 ```
-This launch file will load:
-- A [cartesian impedance controller](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/src/franka_cartesian_controllers/cartesian_pose_impedance_controller.cpp) that takes as input a desired end-effector pose (as a geometry_msg::PoseStamped) with topic name ``/cartesian_impedance_controller_pose_command/desired_pose``. 
+This launch file will load a [cartesian impedance controller](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/src/franka_cartesian_controllers/cartesian_pose_impedance_controller.cpp) that:
+- Takes as input a desired end-effector pose (position and orientation) as a ``geometry_msg::PoseStamped`` with topic name ``/cartesian_impedance_controller_pose_command/desired_pose``.
+- Will compensate for external forces imposed by additional tools/accesories mounted on the gripper (as described in joint gravity compensation controller above).
+- Control for a desired nullspace configuration, defined in  [config/impedance_control_additional_params.yaml](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/config/impedance_control_additional_params.yaml)
 
-#### Cartesian Impedance with Twist Command
+#### Cartesian Impedance Controller with Twist Command
 ```bash
 roslaunch franka_interactive_controllers cartesian_twist_impedance_controller.launch
 ```
 
-- To move robot to desired joint configuration (q_goal) with a motion generator and joint impedance control:
-  ```bash
-  roslaunch franka_interactive_controllers joint_goal_impedance_controller.launch
-  ```
+#### Joint Impedance Control with Position Command
+PD control law with position error tracking (stiffness control) and velocity damping.
+*To fill...*
   
-**[GRIPPER CONTROL]**  
-This repo includes a ros-nodified version of  [franka_gripper_run](https://github.com/nbfigueroa/franka_gripper_run) that uses the actionlib server from [franka_ros/franka_gripper](https://frankaemika.github.io/docs/franka_ros.html#franka-gripper). A simple action client node that open/closes the gripper can be used by running the following:
-```bash
-rosrun franka_interactive_controllers franka_gripper_run_node <command_type>
-```
-Where ``<command_type>``= 1 (close) and 0 (open).
+#### Joint Impedance Control with Velocity Command  
+*To fill...*
 
-To programatically open/close the gripper from your own code check out the franka_gripper_run_node [C++ code](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/src/franka_gripper_run_node.cpp).
 
-You can also control the gripper with a GUI like in [franka_gripper_run](https://github.com/nbfigueroa/franka_gripper_run). To do so simply run the following script:
-```bash
-rosrun franka_interactive_controllers franka_gui_gripper_run.py
-```
-
-**[LIBFRANKA CONTROLLERS]**   
-We also include some controllers for **joint motion generator to a goal and the open/close gripper bypassing franka_ros**; i.e. using solely the [libfranka](https://frankaemika.github.io/docs/libfranka.html) driver. These cannot be used when either of the launch files above are running, but can be useful to quickly setup a robot; i.e. open/close gripper and send to a desired joint configuration.
-- Move robot to desired ``q_goal``:
-  ```bash
-  rosrun franka_interactive_controllers libfranka_joint_goal_motion_generator <goal_id>
-  ```
-  See [cpp file](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/src/libfranka_joint_goal_motion_generator.cpp) for ``q_goal`` definitions, you can replace or add more as you like, you should only recompile.
-- Open/Close gripper (same as above but withou the actionlib interface, using ONLY [libfranka](https://frankaemika.github.io/docs/libfranka.html)):
-  ```bash
-  rosrun franka_interactive_controllers libfranka_gui_gripper_run.py
-  ```
 ---
 ## Contact
 Maintainer: [Nadia Figueroa](https://nbfigueroa.github.io/) (nadiafig @ seas dot upenn edu)  
