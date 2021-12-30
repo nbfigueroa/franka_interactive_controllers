@@ -42,7 +42,7 @@ We include a list of instructions for how to start using the franka panda arm wi
 - [Basic robot operating functionalities](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/basic_robot_control.md) (open/close gripper and move robot to a desired joint position bypassing franka_ros -- useful to startup an experiment).
 - [Kinesthetic Teaching/Recording](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/kinesthetic_teaching_recording.md)
 - Learning DS motion policies
-- Executing DS motion policies: See 
+- Executing DS motion policies
 
 ## Usage
 Following we detail instructions on how to bringup the controllers and their functionalities:   
