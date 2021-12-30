@@ -40,9 +40,10 @@ We include a list of instructions for how to start using the franka panda arm wi
 - [Startup the robot](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/robot_startup.md)
 - [External tool compensation](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/external_tool_compensation.md) (necessary if your experiment requires mounting a tool/accesory on the franka hand)
 - [Basic robot operating functionalities](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/basic_robot_control.md) (open/close gripper and move robot to a desired joint position bypassing franka_ros -- useful to startup an experiment).
-- [Kinesthetic Teaching/Recording](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/kinesthetic_teaching_recording.md)
-- Learning DS motion policies
+- [Kinesthetic Teaching + Data Collection and Pre-Processing](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/kinesthetic_teaching_recording.md)
+- [Learning DS motion policies](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/ds_learning.md)
 - Executing DS motion policies
+- Executing custom motion policies (MPC, feed-forward NN, DMP, etc)
 
 ## Usage
 Following we detail instructions on how to bringup the controllers and their functionalities:   
