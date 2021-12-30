@@ -1,4 +1,4 @@
-# Kinesthetic Teaching/Recording
+# Kinesthetic Teaching + Data Collection and Pre-Processing
 
 These instructions assume you have installed the [easy-kinesthetic-recording](https://github.com/nbfigueroa/easy-kinesthetic-recording) package and all of its dependencies. 
 - See [README](https://github.com/nbfigueroa/easy-kinesthetic-recording/blob/latest-franka/README.md) file for installation instructions.  
@@ -89,12 +89,11 @@ See examples below.
 
 ### Examples
 
-This code together with [franka_interactive_controllers](https://github.com/nbfigueroa/franka_interactive_controllers) has been used for two household tasks:
+This code has been used for two household tasks:
 - **cooking preparation task**: scooping and mixing ingredients from bowls
 
 <p align="center">
 	<img src="https://github.com/nbfigueroa/easy-kinesthetic-recording/blob/latest-franka/img/scooping_task_reduced.gif" width="425x">
-<!-- 	<img src="https://github.com/nbfigueroa/easy-kinesthetic-recording/blob/latest-franka/img/scooping_recording.gif" width="400x">  -->
 	<img src="https://github.com/nbfigueroa/easy-kinesthetic-recording/blob/latest-franka/img/scooping_rosbag_replay.gif" width="450x">
 </p>
 <p align="center">
@@ -102,5 +101,53 @@ This code together with [franka_interactive_controllers](https://github.com/nbfi
 </p>
 
 - **table setting task**: grasping plates/cutlery from dish rack and placing it on a table.
-*To Fill..*
 
+<p align="center">
+	<img src="https://github.com/nbfigueroa/easy-kinesthetic-recording/blob/latest-franka/img/tablesetting_task_reduced.gif" width="375x">
+	<img src="https://github.com/nbfigueroa/easy-kinesthetic-recording/blob/latest-franka/img/tablesetting_rosbag_replay.gif" width="400x">
+</p>
+<p align="center">
+	Left: Video of kinesthetic demonstration, Right: Visualization of recorded trajectories by replaying recorded rosbag
+</p>
+
+
+---
+## Step 2: Extracting Trajectories from ROSBag Data for Task Learning
+
+### Extracting ROSBag Data to MATLAB (Working)
+To export the data recorded in the rosbags to MATLAB you can use the [rosbag_to_mat](https://github.com/nbfigueroa/rosbag_to_mat) package. Follow the instructions in the [README](https://github.com/nbfigueroa/rosbag_to_mat/blob/main/README.md) file to extract data for the following tasks:
+
+- **cooking preparation task**: raw trajectories from demonstrations (colors indicate continuous demonstration):
+<p align="center">
+  <img src="https://github.com/nbfigueroa/rosbag_to_mat/blob/main/figs/franka-cooking-multistep.png" width="700x"> 
+</p>
+
+- **table setting task**: raw trajectories from demonstrations (colors indicate continuous demonstration):
+<p align="center">
+  <img src="https://github.com/nbfigueroa/rosbag_to_mat/blob/main/figs/franka-tablesetting-multistep.png" width="700x"> 
+</p>
+
+### Extracting ROSBag Data to Python (Experimental)
+This functionality hasn't been tested yet but I suggest to try out the [bagpy](https://jmscslgroup.github.io/bagpy/): a python package provides specialized class bagreader to read and decode ROS messages from bagfiles in just a few lines of code. 
+
+
+---
+## Step 3: Trajectory Segmentation of Multi-Step Tasks for Motion Policy Learning
+If the trajectories are continuous demonstrations of **a multi-step task** which will be represented as a **sequence of goal-oriented motion policies**, then the trajectories must be segmented.
+
+- **cooking preparation task**: segmented and processed trajectories from demonstrations (colors indicate trajectory clusters), see [README](https://github.com/nbfigueroa/rosbag_to_mat/blob/main/README.md) for segmentation algorithm details:
+<p align="center">
+  <img src="https://github.com/nbfigueroa/rosbag_to_mat/blob/main/figs/franka_cooking_DS_s1_clustered_trajectories.png" width="306x"><img src="https://github.com/nbfigueroa/rosbag_to_mat/blob/main/figs/franka_cooking_DS_s2_clustered_trajectories.png" width="302x"><img src="https://github.com/nbfigueroa/rosbag_to_mat/blob/main/figs/franka_cooking_DS_s3_clustered_trajectories.png" width="300x"> 
+</p>
+
+- **table setting task**: segmented and processed trajectories from demonstrations (colors indicate trajectory clusters), see [README](https://github.com/nbfigueroa/rosbag_to_mat/blob/main/README.md) for segmentation details:
+
+<p align="center">
+  <img src="https://github.com/nbfigueroa/rosbag_to_mat/blob/main/figs/franka-tablesetting-multistep-segmented.png" width="500x"> 
+</p>
+
+---
+## Next Step 
+Now that the trajectories have been extracted and segmented you can learn motion policies from them! 
+
+If you want to learn Dynamical System (DS) based motion policies following the the LPV-DS approach proposed in [Figueroa and Billard, 2018](http://proceedings.mlr.press/v87/figueroa18a.html) see 
