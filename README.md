@@ -42,7 +42,7 @@ We include a list of [instructions](https://github.com/nbfigueroa/franka_interac
 - [Basic robot operating functionalities](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/basic_robot_control.md) (open/close gripper and move robot to a desired joint position bypassing franka_ros -- useful to startup an experiment).
 - [Kinesthetic Teaching + Data Collection and Pre-Processing](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/kinesthetic_teaching_recording.md)
 - [Learning DS motion policies](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/ds_learning.md)
-- Executing DS motion policies
+- [Executing DS motion policies](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/executing_ds.md)
 - Executing custom motion policies (MPC, feed-forward NN, DMP, etc)
 
 ## Usage
