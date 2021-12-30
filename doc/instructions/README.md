@@ -8,3 +8,4 @@ This folder includes instructions to operate the franka with the ``franka_intera
 - [Kinesthetic Teaching/Recording](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/kinesthetic_teaching_recording.md)
 - Learning DS motion policies
 - Executing DS motion policies
+- Executing custom motion policies
