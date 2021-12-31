@@ -6,5 +6,9 @@
     local-name: easy_kinesthetic_recording
     uri: https://github.com/nbfigueroa/easy-kinesthetic-recording
     branch: latest-franka
-    
+   
+- git:
+    local-name: ds_motion_generator
+    uri: https://github.com/nbfigueroa/ds_motion_generator
+    branch: latest-mit
     
