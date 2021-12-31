@@ -103,20 +103,19 @@ To load a cartesian impedance controller with pose command (a PD control law wit
 roslaunch franka_interactive_controllers cartesian_pose_impedance_controller.launch
 ```
 This launch file will load a ``cartesian impedance controller`` that:
-- Takes as input a desired end-effector pose (position and orientation) as a ``geometry_msg::PoseStamped`` with topic name ``/cartesian_impedance_controller_pose_command/desired_pose``.
+- Takes as input a desired end-effector pose (position and orientation) as a ``geometry_msg::PoseStamped`` with topic name ``/cartesian_impedance_controller/desired_pose``.
 - Will compensate for external forces imposed by additional tools/accesories mounted on the gripper (as described in joint gravity compensation controller above).
 - Control for a desired nullspace configuration, defined in  [config/impedance_control_additional_params.yaml](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/config/impedance_control_additional_params.yaml), stiffness for nullspace control can be modified online by dynamic reconfigure.
 
 #### Cartesian Impedance Controller with Twist Command
-*To fill...*
-<!-- To load a cartesian impedance controller with twist command (a PD control law with position -- computed via numerical integreation -- and velocity error tracking) launch the following:
+To load a cartesian impedance controller with twist command (a PD control law with position -- computed via numerical integreation -- and velocity error tracking) launch the following:
 ```bash
 roslaunch franka_interactive_controllers cartesian_twist_impedance_controller.launch
 ```
 This launch file will load a ``cartesian impedance controller`` that:
-- Takes as input a desired end-effector twist (linear and angular velocity) as a ``geometry_msg::TwistStamped`` with topic name ``/cartesian_impedance_controller_twist_command/desired_twist``.
+- Takes as input a desired end-effector twist (linear and angular velocity) as a ``geometry_msg::Twist`` with topic name ``/cartesian_impedance_controller/desired_twist``.
 - Will compensate for external forces imposed by additional tools/accesories mounted on the gripper (as described in joint gravity compensation controller above).
-- Control for a desired nullspace configuration, defined in  [config/impedance_control_additional_params.yaml](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/config/impedance_control_additional_params.yaml), stiffness for nullspace control can be modified online by dynamic reconfigure. -->
+- Control for a desired nullspace configuration, defined in  [config/impedance_control_additional_params.yaml](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/config/impedance_control_additional_params.yaml), stiffness for nullspace control can be modified online by dynamic reconfigure.
 
 
 #### DS-based Passive Cartesian Impedance Controller
