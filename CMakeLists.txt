@@ -57,7 +57,7 @@ catkin_package(
 # DECLARE LIBARY HEADER AND SOURCE FILES
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(H_FILES ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_pose_impedance_controller.h
-  #             ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_velocity_impedance_controller.h
+            ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_twist_impedance_controller.h
 #             ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_passiveDS_impedance_controller.h
             ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_pose_franka_controller.h
             ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_velocity_franka_controller.h            
@@ -78,7 +78,7 @@ include_directories(${dynamic_reconfigure_PACKAGE_PATH}/cmake/cfgbuild.cmake)
 ## Declare a C++ executable
 set(SRCS
   src/franka_cartesian_controllers/cartesian_pose_impedance_controller.cpp
-#   src/franka_cartesian_controllers/cartesian_velocity_impedance_controller.cpp
+  src/franka_cartesian_controllers/cartesian_twist_impedance_controller.cpp
 #   src/franka_cartesian_controllers/cartesian_passiveDS_impedance_controller.cpp
   src/franka_cartesian_controllers/cartesian_pose_franka_controller.cpp
   src/franka_cartesian_controllers/cartesian_velocity_franka_controller.cpp

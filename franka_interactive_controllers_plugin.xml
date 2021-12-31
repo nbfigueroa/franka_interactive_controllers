@@ -1,12 +1,17 @@
 <library path="lib/libfranka_interactive_controllers">
-  <class name="franka_interactive_controllers/CartesianPoseImpedanceController" type="franka_interactive_controllers::CartesianPoseImpedanceController" base_class_type="controller_interface::ControllerBase">
-    <description>
-      A controller that renders a spring damper system in cartesian space. Compliance parameters with the dynamic reconfigure and the desired/equilibrium pose can be modified online via an interactive marker or by publishing a geometry_pose msg to "/cartesian_impedance_controller/desired_pose".
-    </description>
-  </class>
   <class name="franka_interactive_controllers/JointGravityCompensationController" type="franka_interactive_controllers::JointGravityCompensationController" base_class_type="controller_interface::ControllerBase">
     <description>
       A controller that send 0 torques to the robot + coriolis + external tool compensation + nullspace tracking if desired. Nullspace stiffness can be modified onlive via dynamic reconfigure and external tool compensation forces should be defined in .yaml file in ./config folder.
+    </description>
+  </class>
+  <class name="franka_interactive_controllers/CartesianPoseImpedanceController" type="franka_interactive_controllers::CartesianPoseImpedanceController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      A controller that renders a spring damper system in cartesian space. Compliance parameters with the dynamic reconfigure and the desired/equilibrium pose can be modified online via an interactive marker or by publishing a geometry_msg Pose to "/cartesian_impedance_controller/desired_pose".
+    </description>
+  </class>
+  <class name="franka_interactive_controllers/CartesianTwistImpedanceController" type="franka_interactive_controllers::CartesianTwistImpedanceController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      A controller that renders a spring damper system in cartesian space. Gain parameters with the dynamic reconfigure and the desired twist can be modified by publishing a geometry_msg Twist to "/cartesian_impedance_controller/desired_twist".
     </description>
   </class>
 

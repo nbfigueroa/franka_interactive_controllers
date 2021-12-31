@@ -10,8 +10,8 @@ cartesian_pose_impedance_controller:
         - panda_joint6
         - panda_joint7
 
-cartesian_velocity_impedance_controller:
-    type: franka_interactive_controllers/CartesianVelocityImpedanceController
+cartesian_twist_impedance_controller:
+    type: franka_interactive_controllers/CartesianTwistImpedanceController
     arm_id: panda
     joint_names:
         - panda_joint1
