@@ -24,6 +24,12 @@ NOTE: These cannot be used when either of the launch files above are running, bu
   rosrun franka_interactive_controllers libfranka_joint_goal_motion_generator <goal_id>
   ```
   See [cpp file](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/src/libfranka_joint_goal_motion_generator.cpp) for ``q_goal`` definitions, you can replace or add more as you like, you should only recompile.
+  Currently we have:
+  - 1: home
+  - 2: scooping init
+  - 3: right bowl
+  - 4: center bowl
+  - 5: left bowl
 
 - Open/Close gripper (same as above but withou the actionlib interface, using ONLY [libfranka](https://frankaemika.github.io/docs/libfranka.html)):
   ```bash
