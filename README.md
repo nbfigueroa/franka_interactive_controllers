@@ -108,7 +108,7 @@ This launch file will load a ``cartesian impedance controller`` that:
 - Control for a desired nullspace configuration, defined in  [config/impedance_control_additional_params.yaml](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/config/impedance_control_additional_params.yaml), stiffness for nullspace control can be modified online by dynamic reconfigure.
 
 #### Cartesian Impedance Controller with Twist Command
-To load a cartesian impedance controller with twist command (a PD control law with position -- computed via numerical integreation -- and velocity error tracking) launch the following:
+To load a cartesian impedance controller with twist command (a PD control law with position and velocity error tracking) launch the following:
 ```bash
 roslaunch franka_interactive_controllers cartesian_twist_impedance_controller.launch
 ```
