@@ -6,7 +6,7 @@
   <arg name="bringup_rviz" default="true" />
 
   <!-- Loads robot control interface -->
-  <include file="$(find franka_control)/launch/franka_control.launch" >
+  <include file="$(find franka_interactive_controllers)/launch/franka_control_interactive.launch" >
     <arg name="robot_ip" value="$(arg robot_ip)" />
     <arg name="load_gripper" value="$(arg load_gripper)" />
   </include>

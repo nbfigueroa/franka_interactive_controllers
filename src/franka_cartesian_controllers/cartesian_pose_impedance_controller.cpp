@@ -59,16 +59,46 @@ bool CartesianPoseImpedanceController::init(hardware_interface::RobotHW* robot_h
   // Initialize variables for nullspace control from yaml config file
   q_d_nullspace_.setZero();
   std::vector<double> q_nullspace;
-  if (!node_handle.getParam("q_nullspace", q_nullspace) || q_nullspace.size() != 7) {
+  if (node_handle.getParam("q_nullspace", q_nullspace)) {
+    q_d_nullspace_initialized_ = true;
+    if (q_nullspace.size() != 7) {
       ROS_ERROR(
-          "CartesianPoseImpedanceController: Invalid or no q_nullspace parameters provided, "
-          "aborting controller init!");
+        "CartesianPoseImpedanceController: Invalid or no q_nullspace parameters provided, "
+        "aborting controller init!");
       return false;
     }
-  for (size_t i = 0; i < 7; ++i) 
-    q_d_nullspace_[i] = q_nullspace.at(i);
-  ROS_INFO_STREAM("Desired nullspace position: " << std::endl << q_d_nullspace_);
+    for (size_t i = 0; i < 7; ++i) 
+      q_d_nullspace_[i] = q_nullspace.at(i);
+    ROS_INFO_STREAM("Desired nullspace position (from YAML): " << std::endl << q_d_nullspace_);
+  }
 
+  // Initialize stiffness
+  cartesian_stiffness_target_.setIdentity();
+  cartesian_damping_target_.setIdentity();
+  std::vector<double> cartesian_stiffness_target_yaml;
+  if (!node_handle.getParam("cartesian_stiffness_target", cartesian_stiffness_target_yaml) || cartesian_stiffness_target_yaml.size() != 6) {
+    ROS_ERROR(
+      "CartesianPoseImpedanceController: Invalid or no cartesian_stiffness_target_yaml parameters provided, "
+      "aborting controller init!");
+    return false;
+  }
+  for (int i = 0; i < 6; i ++) {
+    cartesian_stiffness_target_(i,i) = cartesian_stiffness_target_yaml[i];
+  }
+  // Damping ratio = 1
+  for (int i = 0; i < 6; i ++) {
+    cartesian_damping_target_(i,i) = 2.0 * sqrt(cartesian_stiffness_target_yaml[i]);
+  }
+  ROS_INFO_STREAM("cartesian_stiffness_target_: " << std::endl <<  cartesian_stiffness_target_);
+  ROS_INFO_STREAM("cartesian_damping_target_: " << std::endl <<  cartesian_damping_target_);
+
+  if (!node_handle.getParam("nullspace_stiffness", nullspace_stiffness_target_) || nullspace_stiffness_target_ <= 0) {
+    ROS_ERROR(
+      "CartesianPoseImpedanceController: Invalid or no nullspace_stiffness parameters provided, "
+      "aborting controller init!");
+    return false;
+  }
+  ROS_INFO_STREAM("nullspace_stiffness_target_: " << std::endl <<  nullspace_stiffness_target_);
 
   // Getting libranka control interfaces
   auto* model_interface = robot_hw->get<franka_hw::FrankaModelInterface>();
@@ -196,6 +226,12 @@ void CartesianPoseImpedanceController::starting(const ros::Time& /*time*/) {
   orientation_d_        = Eigen::Quaterniond(initial_transform.linear());
   position_d_target_    = initial_transform.translation();
   orientation_d_target_ = Eigen::Quaterniond(initial_transform.linear());
+
+  if (!q_d_nullspace_initialized_) {
+    q_d_nullspace_ = q_initial;
+    q_d_nullspace_initialized_ = true;
+    ROS_INFO_STREAM("Desired nullspace position (from q_initial): " << std::endl << q_d_nullspace_);
+  }
 }
 
 void CartesianPoseImpedanceController::update(const ros::Time& /*time*/,
@@ -271,6 +307,12 @@ void CartesianPoseImpedanceController::update(const ros::Time& /*time*/,
     // compute error to desired pose
     // position error
     Eigen::Matrix<double, 6, 1> error;
+
+    // For debugging
+    ROS_INFO_STREAM("Current ee position: " << position);
+    ROS_INFO_STREAM("Desired ee position from DS: " << position_d_target_);
+    ROS_INFO_STREAM("Desired ee position from DS: " << position_d_);
+
     error.head(3) << position - position_d_;
 
     // orientation error
@@ -317,12 +359,15 @@ void CartesianPoseImpedanceController::update(const ros::Time& /*time*/,
 
   // update parameters changed online either through dynamic reconfigure or through the interactive
   // target by filtering
-  cartesian_stiffness_ =
-      filter_params_ * cartesian_stiffness_target_ + (1.0 - filter_params_) * cartesian_stiffness_;
-  cartesian_damping_ =
-      filter_params_ * cartesian_damping_target_ + (1.0 - filter_params_) * cartesian_damping_;
-  nullspace_stiffness_ =
-      filter_params_ * nullspace_stiffness_target_ + (1.0 - filter_params_) * nullspace_stiffness_;
+  // cartesian_stiffness_ =
+  //     filter_params_ * cartesian_stiffness_target_ + (1.0 - filter_params_) * cartesian_stiffness_;
+  // cartesian_damping_ =
+  //     filter_params_ * cartesian_damping_target_ + (1.0 - filter_params_) * cartesian_damping_;
+  // nullspace_stiffness_ =
+  //     filter_params_ * nullspace_stiffness_target_ + (1.0 - filter_params_) * nullspace_stiffness_;
+  cartesian_stiffness_ = cartesian_stiffness_target_;
+  cartesian_damping_ = cartesian_damping_target_;
+  nullspace_stiffness_ = filter_params_;
   position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
   orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
 }
@@ -342,21 +387,26 @@ Eigen::Matrix<double, 7, 1> CartesianPoseImpedanceController::saturateTorqueRate
 void CartesianPoseImpedanceController::complianceParamCallback(
     franka_interactive_controllers::compliance_paramConfig& config,
     uint32_t /*level*/) {
-  cartesian_stiffness_target_.setIdentity();
-  cartesian_stiffness_target_.topLeftCorner(3, 3)
-      << config.translational_stiffness * Eigen::Matrix3d::Identity();
-  cartesian_stiffness_target_.bottomRightCorner(3, 3)
-      << config.rotational_stiffness * Eigen::Matrix3d::Identity();
-  cartesian_damping_target_.setIdentity();
+  // cartesian_stiffness_target_.setIdentity();
+  // cartesian_stiffness_target_.topLeftCorner(3, 3)
+  //     << config.translational_stiffness * Eigen::Matrix3d::Identity();
+  // cartesian_stiffness_target_.bottomRightCorner(3, 3)
+  //     << config.rotational_stiffness * Eigen::Matrix3d::Identity();
+  // cartesian_damping_target_.setIdentity();
   
   // Damping ratio = 1
-  cartesian_damping_target_.topLeftCorner(3, 3)
-      << 2.0 * sqrt(config.translational_stiffness) * Eigen::Matrix3d::Identity();
-  cartesian_damping_target_.bottomRightCorner(3, 3)
-      << 2.0 * sqrt(config.rotational_stiffness) * Eigen::Matrix3d::Identity();
-  nullspace_stiffness_target_ = config.nullspace_stiffness;
+  // cartesian_damping_target_.topLeftCorner(3, 3)
+  //     << 2.0 * sqrt(config.translational_stiffness) * Eigen::Matrix3d::Identity();
+  // cartesian_damping_target_.bottomRightCorner(3, 3)
+  //     << 2.0 * sqrt(config.rotational_stiffness) * Eigen::Matrix3d::Identity();
+  
+  // nullspace_stiffness_target_ = config.nullspace_stiffness;
 
   activate_tool_compensation_ = config.activate_tool_compensation;
+
+  // ROS_INFO_STREAM("cartesian_stiffness_target_: " << std::endl <<  cartesian_stiffness_target_);
+  // ROS_INFO_STREAM("cartesian_damping_target_: " << std::endl <<  cartesian_damping_target_);
+  // ROS_INFO_STREAM("nullspace_stiffness_target_: " << std::endl <<  nullspace_stiffness_target_);
 }
 
 void CartesianPoseImpedanceController::desiredPoseCallback(

@@ -1,3 +1,24 @@
-external_tool_compensation: [0, 0, 0, 0, 0, 0]
+# external_tool_compensation: [0, 0, 0, 0, 0, 0]
 # external_tool_compensation: [0.46, -0.17, -1.64, 0, 0, 0] # no tool
-q_nullspace: [-0.00018091740727571674, -0.7847940677927195, -0.00024404294520081373, -2.3564243981994837, 0.0006413287301674081, 1.5711293005943296, 0.7850547459596864]
+
+# Franka stand 220112 DSLTL
+external_tool_compensation: [0.66381655, 0.0753069032, -1.72973592, 0, 0, 0]
+# F_ext^{with tool}
+# force = [-0.24196727403693258, 0.045701724787694686, -3.555890477166464]
+# torque = [-0.14540933419992513, -0.5687791825758969, 0.028329633410985003]
+# F_ext^{no tool}
+# force = [-0.905783824376473, -0.02960517842260313, -1.8261545619854467]
+# torque = [-0.11730501208549998, -0.38840423502900806, -0.005434298561481796]
+
+
+# If leave commented, then will use q_initial as q_d_nullspace_
+#q_nullspace: [-0.00018091740727571674, -0.7847940677927195, -0.00024404294520081373, -2.3564243981994837, 0.0006413287301674081, 1.5711293005943296, 0.7850547459596864]
+
+# cartesian_stiffness_target_ used in cartesian_pose_impedance_controller
+# cartesian_stiffness_target: [600, 600, 600, 50, 50, 50] 
+# RSS: teach, can only move along y,z or rotate around y:
+cartesian_stiffness_target: [1000, 0, 0, 50, 0, 50]
+# RSS: replay:
+# cartesian_stiffness_target: [1000, 600, 600, 50, 50, 50]
+# cartesian_stiffness_target: [1000, 200, 200, 50, 50, 50]
+nullspace_stiffness: 100

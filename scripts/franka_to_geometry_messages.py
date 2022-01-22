@@ -12,9 +12,9 @@ Use this script to publish franka states vairables as geometry messages.
 
 class FrankaStatesConverter:
     def __init__(self):
-        self.sub = rospy.Subscriber("/franka_state_controller/franka_states", FrankaState, self.convert_to_geometry_msg, queue_size=1)
-        self.pub_eeff = rospy.Publisher("/franka_state_controller/O_T_EE", PoseStamped, queue_size=1)
-        self.pub_ee_pose = rospy.Publisher("/franka_state_controller/ee_pose", Pose, queue_size=1)
+        self.sub = rospy.Subscriber("/franka_state_controller/franka_states", FrankaState, self.convert_to_geometry_msg, queue_size=1, tcp_nodelay=True)
+        self.pub_eeff        = rospy.Publisher("/franka_state_controller/O_T_EE", PoseStamped, queue_size=1)
+        self.pub_ee_pose     = rospy.Publisher("/franka_state_controller/ee_pose", Pose, queue_size=1)
         self.pub_eeff_flange = rospy.Publisher("/franka_state_controller/O_T_FL", PoseStamped, queue_size=1)
 
     @staticmethod

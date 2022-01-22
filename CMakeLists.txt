@@ -128,6 +128,8 @@ target_link_libraries(libfranka_gripper_run franka_interactive_controllers ${cat
 add_executable(libfranka_joint_goal_motion_generator src/libfranka_joint_goal_motion_generator.cpp)
 target_link_libraries(libfranka_joint_goal_motion_generator franka_interactive_controllers ${catkin_LIBRARIES})
 
+add_executable(libfranka_joint_goal_motion_generator_rss src/libfranka_joint_goal_motion_generator_rss.cpp)
+target_link_libraries(libfranka_joint_goal_motion_generator_rss franka_interactive_controllers ${catkin_LIBRARIES})
 
 ## Installation
 install(TARGETS franka_interactive_controllers

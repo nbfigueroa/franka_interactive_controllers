@@ -41,6 +41,7 @@ class CartesianTwistImpedanceController : public controller_interface::MultiInte
   std::unique_ptr<franka_hw::FrankaModelHandle> model_handle_;
   std::vector<hardware_interface::JointHandle> joint_handles_;
 
+  double dt_ = 0.001;
   double filter_params_{0.005};
   double nullspace_stiffness_{20.0};
   double nullspace_stiffness_target_{20.0};
@@ -50,6 +51,8 @@ class CartesianTwistImpedanceController : public controller_interface::MultiInte
   Eigen::Matrix<double, 6, 6> cartesian_damping_;
   Eigen::Matrix<double, 6, 6> cartesian_damping_target_;
   Eigen::Matrix<double, 7, 1> q_d_nullspace_;
+  // whether to load from yaml or use initial robot config
+  bool q_d_nullspace_initialized_ = false;
   Eigen::Vector3d position_d_;
   Eigen::Quaterniond orientation_d_;
   Eigen::Vector3d position_d_target_;

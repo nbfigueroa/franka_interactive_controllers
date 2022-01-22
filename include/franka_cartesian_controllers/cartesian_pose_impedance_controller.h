@@ -49,6 +49,8 @@ class CartesianPoseImpedanceController : public controller_interface::MultiInter
   Eigen::Matrix<double, 6, 6> cartesian_damping_;
   Eigen::Matrix<double, 6, 6> cartesian_damping_target_;
   Eigen::Matrix<double, 7, 1> q_d_nullspace_;
+  // whether to load from yaml or use initial robot config
+  bool q_d_nullspace_initialized_ = false;
   Eigen::Vector3d position_d_;
   Eigen::Quaterniond orientation_d_;
   Eigen::Vector3d position_d_target_;
