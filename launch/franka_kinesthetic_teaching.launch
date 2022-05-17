@@ -5,7 +5,7 @@
   <arg name="use_gripper_gui"            default="true" />
   <arg name="load_franka_control"        default="false" />
   <arg name="load_kinesthetic_teaching"  default="true" />
-  <arg name="path_save_rosbag"           default="/home/panda2/rosbag_recordings/cooking/"/>  
+  <arg name="path_save_rosbag"           default="/home/nbfigueroa/recordings/icra-22-demo/"/>
   <arg name="topics_rosbag"       
     default="/tf 
     /franka_state_controller/joint_states 

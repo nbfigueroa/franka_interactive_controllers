@@ -1,6 +1,6 @@
 - git:
     local-name: franka_ros
-    uri: https://github.com/frankaemika/franka_ros.git
+    uri: https://github.com/frankaemika/franka_ros
 
 - git:
     local-name: easy_kinesthetic_recording
@@ -10,3 +10,26 @@
     local-name: ds_motion_generator
     uri: https://github.com/nbfigueroa/ds_motion_generator
     
+- git:
+    local-name: robot_math_tools
+    uri: https://github.com/nbfigueroa-rlic/robot_math_tools.git
+    
+- git:
+    local-name: fast-gmm
+    uri: https://github.com/epfl-lasa/fast-gmm.git
+    version: devel
+    
+- git:
+    local-name: lpvDS
+    uri: https://github.com/nbfigueroa/lpvDS-lib.git
+    version: nadia
+
+- git:
+    local-name: record_ros
+    uri: https://github.com/nbfigueroa/record_ros.git
+    version: master
+    
+- git:
+    local-name: rosbag_to_mat
+    uri: https://github.com/nbfigueroa/rosbag_to_mat.git
+    version: main
