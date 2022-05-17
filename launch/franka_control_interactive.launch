@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <launch>
-  <arg name="robot_ip" />
-  <arg name="arm_id" default="panda" />
+  <arg name="robot_ip"     default="172.16.0.2"/>
+  <arg name="arm_id"       default="panda" />
   <arg name="load_gripper" default="true" />
 
   <param name="robot_description" command="$(find xacro)/xacro $(find franka_description)/robots/panda_arm.urdf.xacro hand:=$(arg load_gripper) arm_id:=$(arg arm_id)" />

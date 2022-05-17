@@ -1,15 +1,19 @@
 <?xml version="1.0" ?>
 <launch>
-  <arg name="robot_ip" default="172.16.0.2"/>
-  <arg name="load_gripper" default="true" />
-  <arg name="use_gripper_gui" default="true" />
-  <arg name="bringup_rviz" default="true" />
+  <arg name="robot_ip"            default="172.16.0.2"/>
+  <arg name="load_gripper"        default="true" />
+  <arg name="use_gripper_gui"     default="true" />
+  <arg name="bringup_rviz"        default="true" />
+  <arg name="load_franka_control" default="true" />
 
-  <!-- Loads robot control interface -->
-  <include file="$(find franka_interactive_controllers)/launch/franka_control_interactive.launch" >
-    <arg name="robot_ip" value="$(arg robot_ip)" />
-    <arg name="load_gripper" value="$(arg load_gripper)" />
-  </include>
+  <!-- Bringup franka_interactive_bringup.launch and gravity compensation controller!-->
+  <group if="$(arg load_franka_control)">
+    <!-- Loads robot control interface -->
+    <include file="$(find franka_interactive_controllers)/launch/franka_control_interactive.launch" >
+      <arg name="robot_ip" value="$(arg robot_ip)" />
+      <arg name="load_gripper" value="$(arg load_gripper)" />
+    </include>
+  </group>
 
   <!-- Convert franka state of EE to Geometry Message PoseStamped!! -->  
   <node name="franka_to_geometry_messages" pkg="franka_interactive_controllers" type="franka_to_geometry_messages.py" respawn="false" output="screen"/>
