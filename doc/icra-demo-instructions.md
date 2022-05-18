@@ -8,17 +8,17 @@ $ ...
 ```
 
 
-1. Bringup the franka interactive control interface:
+### 1. Bringup the franka interactive control interface (in one terminal):
 ```
 $ ...
 ```
 
-2a. If you want to record demonstrations you can run the gravity compensation controller:
+### 2a. If you want to record demonstrations you can run the gravity compensation controller (in another terminal):
 ```
 $ ...
 ```
 
-2b. To execute a motion policy load cartesian impedance (twist) controller
+### 2b. To execute a motion policy load cartesian impedance (twist) controller (in another terminal):
 ```
 $ ...
 ```
@@ -28,17 +28,17 @@ NOTE: Only one controller can run at the same time!
 
 ## On New Lenovo Laptop (running the RT-Kernel Ubuntu 20)
 
-1. Bringup visualization!:
+### 1. Bringup visualization (in one terminal):
 ```
 $ roslaunch franka_interactive_controllers franka_interactive_bringup.launch
 ```
 
-2a. If you want to record demonstrations you can run the gravity compensation controller:
+### 2a. If you want to record demonstrations you can run the gravity compensation controller (in one terminal):
 ```
 $ roslaunch franka_interactive_controllers franka_kinesthetic_teaching.launch
 ```
 
-2b. To execute a motion policy load franka-lpvds tasks:
+### 2b. To execute a motion policy load franka-lpvds tasks (in one terminal):
 ```
 $
 ```
