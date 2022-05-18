@@ -7,18 +7,17 @@ Befor starting execution of the task send robot to home joint position (franka_c
 $ rosrun franka_interactive_controllers libfranka_joint_goal_motion_generator 1
 ```
 
-
 ### 1. Bringup the franka interactive control interface (in one terminal):
 ```
 $ roslaunch franka_interactive_controllers franka_control_interactive.launch
 ```
 
-### 2a. To record demonstrations you can run the gravity compensation controller (in another terminal):
+### 2. To execute a learned motion policy load cartesian impedance (twist) controller (in another terminal):
 ```
 $ roslaunch franka_interactive_controllers cartesian_twist_impedance_controller.launch
 ```
 
-### 2b. To execute a learned motion policy load cartesian impedance (twist) controller (in another terminal):
+### 2 alternative [extra demo]: To record demonstrations you can run the gravity compensation controller (in another terminal):
 ```
 $ roslaunch franka_interactive_controllers joint_gravity_compensation_controller.launch
 ```
@@ -38,12 +37,15 @@ $ rm -rf *
 $ roslaunch franka_interactive_controllers franka_interactive_bringup.launch
 ```
 
-### 2a. To record demonstrations you can run the gravity compensation controller (in one terminal):
+### 2. In the GUI set translational stiffness to 300
+
+### 3. To execute a learned motion policy load franka-lpvds tasks (in one terminal):
+```
+$ ...
+```
+
+### Alternative [extra demo]: If you want to record demos then you can run the following and click "record" in the pop-up GUI:
 ```
 $ roslaunch franka_interactive_controllers franka_kinesthetic_teaching.launch
 ```
 
-### 2b. To execute a learned motion policy load franka-lpvds tasks (in one terminal):
-```
-$
-```
