@@ -302,9 +302,9 @@ void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
     Eigen::Matrix<double, 6, 1> error;
 
     // Simple integration of DS
-    ROS_INFO_STREAM("Current ee position: " << position);
-    ROS_INFO_STREAM("Desired velocity from DS: " << velocity_d_);
-    ROS_INFO_STREAM("Desired ee position from DS: " << position_d_);
+    // ROS_INFO_STREAM("Current ee position: " << position);
+    // ROS_INFO_STREAM("Desired velocity from DS: " << velocity_d_);
+    // ROS_INFO_STREAM("Desired ee position from DS: " << position_d_);
     error.head(3) << position - position_d_;
 
     // orientation error
@@ -409,8 +409,8 @@ void CartesianTwistImpedanceController::desiredTwistCallback(
   velocity_d_         << msg->linear.x, msg->linear.y, msg->linear.z;
   position_d_target_  << position + velocity_d_*dt_*100;
 
-  ROS_INFO_STREAM("[CALLBACK] Desired velocity from DS: " << velocity_d_);
-  ROS_INFO_STREAM("[CALLBACK] Desired ee position from DS: " << position_d_target_);
+  // ROS_INFO_STREAM("[CALLBACK] Desired velocity from DS: " << velocity_d_);
+  // ROS_INFO_STREAM("[CALLBACK] Desired ee position from DS: " << position_d_target_);
 
 
   // position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;

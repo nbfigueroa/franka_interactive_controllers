@@ -20,11 +20,14 @@ internal_controller: joint_impedance
 realtime_config: enforce
 # Configure the initial defaults for the collision behavior reflexes.
 collision_config:
-  lower_torque_thresholds_acceleration: [40.0, 40.0, 36.0, 36.0, 32.0, 28.0, 24.0]  # [Nm]
-  upper_torque_thresholds_acceleration: [40.0, 40.0, 36.0, 36.0, 32.0, 28.0, 24.0]  # [Nm]
-  lower_torque_thresholds_nominal: [40.0, 40.0, 36.0, 36.0, 32.0, 28.0, 24.0]  # [Nm]
-  upper_torque_thresholds_nominal: [40.0, 40.0, 36.0, 36.0, 32.0, 28.0, 24.0]  # [Nm]
-  lower_force_thresholds_acceleration: [40.0, 40.0, 40.0, 50.0, 50.0, 50.0]  # [N, N, N, Nm, Nm, Nm]
-  upper_force_thresholds_acceleration: [40.0, 40.0, 40.0, 50.0, 50.0, 50.0]  # [N, N, N, Nm, Nm, Nm]
-  lower_force_thresholds_nominal: [40.0, 40.0, 40.0, 50.0, 50.0, 50.0]  # [N, N, N, Nm, Nm, Nm]
-  upper_force_thresholds_nominal: [40.0, 40.0, 40.0, 50.0, 50.0, 50.0]  # [N, N, N, Nm, Nm, Nm]
+  lower_torque_thresholds_acceleration: [-80, -80, -80, -80, -30, -30, -30]  # [Nm]
+  upper_torque_thresholds_acceleration: [80, 80, 80, 80, 30, 30, 30]  # [Nm]
+  lower_torque_thresholds_nominal: [20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0]  # [Nm]
+  upper_torque_thresholds_nominal: [100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0]  # [Nm]
+  lower_force_thresholds_acceleration: [-80, -80, -80,  -30, -30, -30]  # [N, N, N, Nm, Nm, Nm]
+  upper_force_thresholds_acceleration: [80, 80, 80, 30, 30, 30]  # [N, N, N, Nm, Nm, Nm]
+  lower_force_thresholds_nominal: [100.0, 100.0, 100.0, 7.5, 7.5, 7.5]  # [N, N, N, Nm, Nm, Nm]
+  upper_force_thresholds_nominal: [100.0, 100.0, 100.0, 100.0, 100.0, 100.0]  # [N, N, N, Nm, Nm, Nm]
+
+# Values from here:
+# https://dei-gitlab.dei.unibo.it/lar/franka_driver/-/blob/e4e36931d5be2efb864302de21391be443179aee/franka_controllers/src/prova_servizio.cpp
