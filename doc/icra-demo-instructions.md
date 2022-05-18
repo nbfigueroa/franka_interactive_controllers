@@ -13,12 +13,12 @@ $ ...
 $ ...
 ```
 
-### 2a. If you want to record demonstrations you can run the gravity compensation controller (in another terminal):
+### 2a. To record demonstrations you can run the gravity compensation controller (in another terminal):
 ```
 $ ...
 ```
 
-### 2b. To execute a motion policy load cartesian impedance (twist) controller (in another terminal):
+### 2b. To execute a learned motion policy load cartesian impedance (twist) controller (in another terminal):
 ```
 $ ...
 ```
@@ -33,12 +33,12 @@ NOTE: Only one controller can run at the same time!
 $ roslaunch franka_interactive_controllers franka_interactive_bringup.launch
 ```
 
-### 2a. If you want to record demonstrations you can run the gravity compensation controller (in one terminal):
+### 2a. To record demonstrations you can run the gravity compensation controller (in one terminal):
 ```
 $ roslaunch franka_interactive_controllers franka_kinesthetic_teaching.launch
 ```
 
-### 2b. To execute a motion policy load franka-lpvds tasks (in one terminal):
+### 2b. To execute a learned motion policy load franka-lpvds tasks (in one terminal):
 ```
 $
 ```
