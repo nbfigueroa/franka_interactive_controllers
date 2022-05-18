@@ -59,6 +59,12 @@ class CartesianTwistImpedanceController : public controller_interface::MultiInte
   Eigen::Quaterniond orientation_d_target_;
   Eigen::Vector3d velocity_d_;
 
+  // Timing
+  ros::Duration elapsed_time;
+  double last_cmd_time;
+  double vel_cmd_timeout;
+
+
   // Variables for initialization and tool compensation
   bool _goto_home;
   double jointDS_epsilon_;

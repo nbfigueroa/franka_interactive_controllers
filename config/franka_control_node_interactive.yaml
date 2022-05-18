@@ -22,7 +22,7 @@ realtime_config: enforce
 collision_config:
   lower_torque_thresholds_acceleration: [-80, -80, -80, -80, -30, -30, -30]  # [Nm]
   upper_torque_thresholds_acceleration: [80, 80, 80, 80, 30, 30, 30]  # [Nm]
-  lower_torque_thresholds_nominal: [20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0]  # [Nm]
+  lower_torque_thresholds_nominal: [25.0, 25.0, 22.0, 20.0, 19.0, 17.0, 14.0]  # [Nm]
   upper_torque_thresholds_nominal: [100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0]  # [Nm]
   lower_force_thresholds_acceleration: [-80, -80, -80,  -30, -30, -30]  # [N, N, N, Nm, Nm, Nm]
   upper_force_thresholds_acceleration: [80, 80, 80, 30, 30, 30]  # [N, N, N, Nm, Nm, Nm]

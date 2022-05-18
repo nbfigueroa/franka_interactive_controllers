@@ -223,10 +223,15 @@ void CartesianTwistImpedanceController::starting(const ros::Time& /*time*/) {
     ROS_INFO_STREAM("Desired nullspace position (from q_initial): " << std::endl << q_d_nullspace_);
   }
 
+  // To compute 0 velocities if no command has been given
+  elapsed_time    = ros::Duration(0.0);
+  last_cmd_time   = 0.0;
+  vel_cmd_timeout = 0.1;
+
 }
 
 void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
-                                                 const ros::Duration& /*period*/) {
+                                                 const ros::Duration& period) {
   // get state variables
   franka::RobotState robot_state = state_handle_->getRobotState();
   std::array<double, 7> coriolis_array = model_handle_->getCoriolis();
@@ -246,83 +251,61 @@ void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
   Eigen::Vector3d position(transform.translation());
   Eigen::Quaterniond orientation(transform.linear());
 
+  // Current and Desired EE velocity
+  Eigen::Matrix<double, 6, 1> velocity;
+  Eigen::Matrix<double, 6, 1> velocity_desired_;
+  velocity << jacobian * dq;
+  velocity_desired_.setZero();
+  velocity_desired_.head(3) << velocity_d_;
+  ROS_INFO_STREAM("current velocity: " << velocity.norm());
+
+  // Check velocity command
+  elapsed_time += period;
+  if(ros::Time::now().toSec() - last_cmd_time > vel_cmd_timeout){
+    velocity_d_.setZero();
+    ROS_WARN_STREAM("Command Timeout!");
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////              COMPUTING TASK CONTROL TORQUE           //////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+
   // compute control
   // allocate variables
   Eigen::VectorXd tau_task(7), tau_nullspace(7), tau_d(7), tau_tool(7);
 
-  //////////////////////////////////////////////////////////////////////////////////////////////////
-  // This is the if statement that should be made into two different controllers
-  
-  if (_goto_home){    
-    
+  // Compute task-space errors
+  Eigen::Matrix<double, 6, 1> pose_error;
+  Eigen::Matrix<double, 6, 1> velocity_error;
+  pose_error.setZero();
+  velocity_error.setZero();
 
-    ROS_INFO_STREAM ("Moving robot to home joint configuration.");            
-    
-    // Variables to control robot in joint space 
-    Eigen::VectorXd q_error(7), dq_desired(7), dq_filtered(7), q_desired(7), q_delta(7);
+  // --- Pose Error  --- //     
+  // position_d_        << position + velocity_d_*dt_;
+  // pose_error.head(3) << position - position_d_;
 
-    // Compute linear DS in joint-space
-    q_error = q - q_home_;
-    dq_desired = -A_jointDS_home_ * q_error;
-
-    // Filter desired velocity to avoid high accelerations!
-    dq_filtered = (1-dq_filter_params_)*dq + dq_filter_params_*dq_desired;
-
-    ROS_INFO_STREAM ("Joint position error:" << q_error.norm());
-    // ROS_INFO_STREAM ("dq_desired:" << std::endl << dq_desired);
-    // ROS_INFO_STREAM ("dq_filtered:" << std::endl << dq_filtered);
-
-    // Integrate to get desired position
-    q_desired = q + dq_desired*dt_;
-
-    // Desired torque: Joint PD control with damping ratio = 1
-    tau_task << -k_joint_gains_*(q - q_desired) - d_ff_joint_gains_*dq;
-
-    // Desired torque: Joint PD control
-    // tau_task << -0.50*k_joint_gains_ * q_delta - 2.0*d_joint_gains_*(dq - dq_desired) - d_ff_joint_gains_*dq;
-
-    if (q_error.norm() < jointDS_epsilon_){
-      ROS_INFO_STREAM ("Finished moving to initial joint configuration. Continuing with desired Cartesian task!" << std::endl);  
-      _goto_home = false;
-    }    
-
-    // convert to eigen
-    Eigen::Affine3d current_transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
-
-    // set desired point for Cartesian impedance controller to current state
-    position_d_  = current_transform.translation();
-
+  // orientation error
+  if (orientation_d_.coeffs().dot(orientation.coeffs()) < 0.0) {
+    orientation.coeffs() << -orientation.coeffs();
   }
-  else{
+  // "difference" quaternion
+  Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d_);
+  pose_error.tail(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
+  // Transform to base frame
+  pose_error.tail(3) << -transform.linear() * pose_error.tail(3);
+  ROS_INFO_STREAM("pose error: " << pose_error.norm());
 
-    // IF NOT GO_HOME -> DO CARTESIAN IMPEDANCE CONTROL
-    // ROS_INFO_STREAM ("Doing Cartesian Impedance Control");            
-    // compute error to desired pose
-    // position error
-    Eigen::Matrix<double, 6, 1> error;
+  // --- Velocity Error --- //
+  velocity_error << velocity - velocity_desired_;
+  ROS_INFO_STREAM("velocity error: " << velocity_error.norm());
 
-    // Simple integration of DS
-    // ROS_INFO_STREAM("Current ee position: " << position);
-    // ROS_INFO_STREAM("Desired velocity from DS: " << velocity_d_);
-    // ROS_INFO_STREAM("Desired ee position from DS: " << position_d_);
-    error.head(3) << position - position_d_;
+  // --- Cartesian PD control with damping ratio = 1 (only ff velocity term) --- //
+  // tau_task << jacobian.transpose() *(-cartesian_stiffness_ * pose_error - cartesian_damping_ * velocity);
 
-    // orientation error
-    if (orientation_d_.coeffs().dot(orientation.coeffs()) < 0.0) {
-      orientation.coeffs() << -orientation.coeffs();
-    }
-    // "difference" quaternion
-    Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d_);
-    error.tail(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
-    // Transform to base frame
-    error.tail(3) << -transform.linear() * error.tail(3);
+  // --- Cartesian PD control with damping ratio = 1 (full PD control with pose and velocity error) --- //
+  tau_task << jacobian.transpose() *(-cartesian_stiffness_ * pose_error - cartesian_damping_ * velocity_error);
 
-    // Cartesian PD control with damping ratio = 1
-    tau_task << jacobian.transpose() *(-cartesian_stiffness_ * error - cartesian_damping_ * (jacobian * dq));
-  
-    ROS_INFO_STREAM("Tau task: " << tau_task);
-  }
-  //////////////////////////////////////////////////////////////////////////////////////////////////
+  ROS_INFO_STREAM("tau task: " << tau_task);
 
   // pseudoinverse for nullspace handling
   // kinematic pseudoinverse
@@ -351,6 +334,9 @@ void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
     joint_handles_[i].setCommand(tau_d(i));
   }
 
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+
   // update parameters changed online either through dynamic reconfigure or through the interactive
   // target by filtering
   cartesian_stiffness_ =
@@ -361,7 +347,7 @@ void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
       filter_params_ * nullspace_stiffness_target_ + (1.0 - filter_params_) * nullspace_stiffness_;
   
   // position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
-  position_d_ = position_d_target_;
+  // position_d_ = position_d_target_;
   orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
 }
 
@@ -385,13 +371,15 @@ void CartesianTwistImpedanceController::complianceParamCallback(
       << config.translational_stiffness * Eigen::Matrix3d::Identity();
   cartesian_stiffness_target_.bottomRightCorner(3, 3)
       << config.rotational_stiffness * Eigen::Matrix3d::Identity();
-  cartesian_damping_target_.setIdentity();
   
+
+  cartesian_damping_target_.setIdentity();
   // Damping ratio = 1
   cartesian_damping_target_.topLeftCorner(3, 3)
       << 2.0 * sqrt(config.translational_stiffness) * Eigen::Matrix3d::Identity();
   cartesian_damping_target_.bottomRightCorner(3, 3)
       << 2.0 * sqrt(config.rotational_stiffness) * Eigen::Matrix3d::Identity();
+  
   nullspace_stiffness_target_ = config.nullspace_stiffness;
 
   activate_tool_compensation_ = config.activate_tool_compensation;
@@ -406,8 +394,8 @@ void CartesianTwistImpedanceController::desiredTwistCallback(
   Eigen::Affine3d transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
   Eigen::Vector3d position(transform.translation());
 
-  velocity_d_         << msg->linear.x, msg->linear.y, msg->linear.z;
-  position_d_target_  << position + velocity_d_*dt_*100;
+  velocity_d_      << msg->linear.x, msg->linear.y, msg->linear.z;
+  last_cmd_time    = ros::Time::now().toSec();
 
   // ROS_INFO_STREAM("[CALLBACK] Desired velocity from DS: " << velocity_d_);
   // ROS_INFO_STREAM("[CALLBACK] Desired ee position from DS: " << position_d_target_);
