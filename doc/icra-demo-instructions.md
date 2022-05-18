@@ -1,4 +1,6 @@
-++++ On Old Lenovo Laptop (running the RT-Kernel Ubuntu 18)++++
+# ICRA 2022 Inspection Task Demo Instructions
+
+## On Old Lenovo Laptop (running the RT-Kernel Ubuntu 18)
 
 Send robot to home joint position (franka_control_interactive.launch should be disabled -- make sure robot is not near a collision before running this! You can move the robot manually first):
 ```
@@ -24,8 +26,7 @@ $ ...
 NOTE: Only one controller can run at the same time!
 
 
-++++ On New Lenovo Laptop (running the RT-Kernel Ubuntu 20)  ++++
-
+## On New Lenovo Laptop (running the RT-Kernel Ubuntu 20)
 
 1. Bringup visualization!:
 ```
