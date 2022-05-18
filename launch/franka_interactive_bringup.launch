@@ -4,7 +4,7 @@
   <arg name="load_gripper"        default="true" />
   <arg name="use_gripper_gui"     default="true" />
   <arg name="bringup_rviz"        default="true" />
-  <arg name="load_franka_control" default="true" />
+  <arg name="load_franka_control" default="false" />
 
   <!-- Bringup franka_interactive_bringup.launch and gravity compensation controller!-->
   <group if="$(arg load_franka_control)">
@@ -17,10 +17,6 @@
 
   <!-- Convert franka state of EE to Geometry Message PoseStamped!! -->  
   <node name="franka_to_geometry_messages" pkg="franka_interactive_controllers" type="franka_to_geometry_messages.py" respawn="false" output="screen"/>
-
-  <!-- Loads controller parameters -->  
-  <rosparam command="load" file="$(find franka_interactive_controllers)/config/impedance_control_additional_params.yaml"/> 
-  <rosparam command="load" file="$(find franka_interactive_controllers)/config/franka_interactive_controllers.yaml" />
 
   <!-- Bring up rqt_reconfigure to modify values -->
   <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" required="false" />
