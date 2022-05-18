@@ -64,7 +64,9 @@ int main(int argc, char** argv) {
     switch(goal_id) {
        case 1  :
           std::cout << "Selected q_home as goal" << std::endl;
-          q_goal = {{0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4}};
+          // q_goal = {{0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4}};
+          q_goal = {{0.009340305111597252, -0.36729619687063647, 0.05388360048542943, -2.3592505386694267, 0.016102603363234352, 2.0088766928513846, 0.8014595653550303}};
+
           break;
        case 2  :
         std::cout << "Selected q_init_scoop as goal" << std::endl;
