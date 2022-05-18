@@ -25,6 +25,11 @@ $ roslaunch franka_interactive_controllers joint_gravity_compensation_controller
 
 NOTE: Only one controller can run at the same time!
 
+NOTE2: Every now and then you need to cleanup the log files!
+```bash
+$ cd /home/nbfigueroa/.ros/log
+$ rm -rf *
+```
 
 ## On New Lenovo Laptop (running the RT-Kernel Ubuntu 20)
 
