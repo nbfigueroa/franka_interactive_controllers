@@ -2,7 +2,7 @@
 
 ## On Old Lenovo Laptop (running the RT-Kernel Ubuntu 18)
 
-Send robot to home joint position (franka_control_interactive.launch should be disabled -- make sure robot is not near a collision before running this! You can move the robot manually first):
+Befor starting execution of the task send robot to home joint position (franka_control_interactive.launch should be disabled -- make sure robot is not near a collision before running this! You can move the robot manually first):
 ```
 $ ...
 ```
