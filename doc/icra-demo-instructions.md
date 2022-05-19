@@ -54,7 +54,7 @@ This will run DS1 (pick block) with target 1. Targets denoted on box. Options ar
 $ roslaunch ds_motion_generator franka_inspection_lpvDS_motionGenerator.launch ds_num:=2
 ```
 
-### 1. On this PC you can show the learned trajectories from MATLAB:
+### 3. On this PC you can show the learned trajectories from MATLAB:
 - Open MATLAB in terminal write the following:
 ```
 $ run_matlab
