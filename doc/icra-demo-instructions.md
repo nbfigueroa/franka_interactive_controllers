@@ -2,17 +2,17 @@
 
 ## On Old Lenovo Laptop (running the RT-Kernel Ubuntu 18)
 
-###0. Befor2 starting execution of the task send robot to home joint position (franka_control_interactive.launch should NOT BE running -- make sure robot is not near a collision before running this! You can move the robot manually first):
+### 1. Before starting execution of the task send robot to home joint position (franka_control_interactive.launch should NOT BE running -- make sure robot is not near a collision before running this! You can move the robot manually first):
 ```
 $ rosrun franka_interactive_controllers libfranka_joint_goal_motion_generator 1
 ```
 
-### 1. Bringup the franka interactive control interface (in one terminal):
+### 2. Bringup the franka interactive control interface (in one terminal):
 ```
 $ roslaunch franka_interactive_controllers franka_control_interactive.launch
 ```
 
-### 2. To execute a learned motion policy load cartesian impedance (twist) controller (in another terminal):
+### 3. To execute a learned motion policy load cartesian impedance (twist) controller (in another terminal):
 ```
 $ roslaunch franka_interactive_controllers cartesian_twist_impedance_controller.launch
 ```
