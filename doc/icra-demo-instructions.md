@@ -67,6 +67,8 @@ You should see this:
       <img src="img/DS-learned.png" width="700x"> 
   </p>
 
+### 4. On this PC you can also show videos of the demonstrations, trajecories and execution:
+All are in this folder: ``/home/nadiafig/Desktop/videos-icra-demo ``
 
 ### Alternative [extra demo]: If you want to record demos then you can run the following and click "record" in the pop-up GUI:
 ```
