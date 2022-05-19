@@ -64,7 +64,7 @@ Open the files: ``franka-inspection-ds1.fig`` and ``franka-inspection-ds2.fig``
 
 You should see this:
  <p align="center">
-      <img src="doc/img/DS-learned.png" width="700x"> 
+      <img src="img/DS-learned.png" width="700x"> 
   </p>
 
 
