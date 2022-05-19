@@ -255,80 +255,41 @@ void CartesianPoseImpedanceController::update(const ros::Time& /*time*/,
   Eigen::Vector3d position(transform.translation());
   Eigen::Quaterniond orientation(transform.linear());
 
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////              COMPUTING TASK CONTROL TORQUE           //////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+
   // compute control
   // allocate variables
   Eigen::VectorXd tau_task(7), tau_nullspace(7), tau_d(7), tau_tool(7);
 
-  //////////////////////////////////////////////////////////////////////////////////////////////////
-  // This is the if statement that should be made into two different controllers
-  if (_goto_home){    
-    ROS_INFO_STREAM ("Moving robot to home joint configuration.");            
-    
-    // Variables to control robot in joint space 
-    Eigen::VectorXd q_error(7), dq_desired(7), dq_filtered(7), q_desired(7), q_delta(7);
-    double dt = 0.001;
 
-    // Compute linear DS in joint-space
-    q_error = q - q_home_;
-    dq_desired = -A_jointDS_home_ * q_error;
+  // ROS_INFO_STREAM ("Doing Cartesian Impedance Control");            
+  // compute error to desired pose
+  // position error
+  Eigen::Matrix<double, 6, 1> error;
 
-    // Filter desired velocity to avoid high accelerations!
-    dq_filtered = (1-dq_filter_params_)*dq + dq_filter_params_*dq_desired;
+  // For debugging
+  // ROS_INFO_STREAM("Current ee position: " << position);
+  // ROS_INFO_STREAM("Desired ee position from DS: " << position_d_target_);
+  // ROS_INFO_STREAM("Desired ee position from DS: " << position_d_);
+  error.head(3) << position - position_d_;
 
-    ROS_INFO_STREAM ("Joint position error:" << q_error.norm());
-    // ROS_INFO_STREAM ("dq_desired:" << std::endl << dq_desired);
-    // ROS_INFO_STREAM ("dq_filtered:" << std::endl << dq_filtered);
-
-    // Integrate to get desired position
-    q_desired = q + dq_desired*dt;
-
-    // Desired torque: Joint PD control with damping ratio = 1
-    tau_task << -k_joint_gains_*(q - q_desired) - d_ff_joint_gains_*dq;
-
-    // Desired torque: Joint PD control
-    // tau_task << -0.50*k_joint_gains_ * q_delta - 2.0*d_joint_gains_*(dq - dq_desired) - d_ff_joint_gains_*dq;
-
-    if (q_error.norm() < jointDS_epsilon_){
-      ROS_INFO_STREAM ("Finished moving to initial joint configuration. Continuing with desired Cartesian task!" << std::endl);  
-      _goto_home = false;
-    }    
-
-    // convert to eigen
-    Eigen::Affine3d current_transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
-
-    // set desired point for Cartesian impedance controller to current state
-    position_d_  = current_transform.translation();
-
+  // orientation error
+  if (orientation_d_.coeffs().dot(orientation.coeffs()) < 0.0) {
+    orientation.coeffs() << -orientation.coeffs();
   }
-  else{
+  // "difference" quaternion
+  Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d_);
+  error.tail(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
+  // Transform to base frame
+  error.tail(3) << -transform.linear() * error.tail(3);
 
-    // IF NOT GO_HOME -> DO CARTESIAN IMPEDANCE CONTROL
-    // ROS_INFO_STREAM ("Doing Cartesian Impedance Control");            
-    // compute error to desired pose
-    // position error
-    Eigen::Matrix<double, 6, 1> error;
-
-    // For debugging
-    ROS_INFO_STREAM("Current ee position: " << position);
-    ROS_INFO_STREAM("Desired ee position from DS: " << position_d_target_);
-    ROS_INFO_STREAM("Desired ee position from DS: " << position_d_);
-
-    error.head(3) << position - position_d_;
-
-    // orientation error
-    if (orientation_d_.coeffs().dot(orientation.coeffs()) < 0.0) {
-      orientation.coeffs() << -orientation.coeffs();
-    }
-    // "difference" quaternion
-    Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d_);
-    error.tail(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
-    // Transform to base frame
-    error.tail(3) << -transform.linear() * error.tail(3);
-
-    // Cartesian PD control with damping ratio = 1
-    tau_task << jacobian.transpose() *(-cartesian_stiffness_ * error - cartesian_damping_ * (jacobian * dq));
-  }
+  // Cartesian PD control with damping ratio = 1
+  tau_task << jacobian.transpose() *(-cartesian_stiffness_ * error - cartesian_damping_ * (jacobian * dq));
   //////////////////////////////////////////////////////////////////////////////////////////////////
+
 
   // pseudoinverse for nullspace handling
   // kinematic pseudoinverse
@@ -356,6 +317,9 @@ void CartesianPoseImpedanceController::update(const ros::Time& /*time*/,
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_d(i));
   }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////
 
   // update parameters changed online either through dynamic reconfigure or through the interactive
   // target by filtering

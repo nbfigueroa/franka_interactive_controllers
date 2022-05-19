@@ -257,7 +257,7 @@ void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
   velocity << jacobian * dq;
   velocity_desired_.setZero();
   velocity_desired_.head(3) << velocity_d_;
-  ROS_INFO_STREAM("current velocity: " << velocity.norm());
+  ROS_INFO_STREAM("current speed: " << velocity.norm());
 
   // Check velocity command
   elapsed_time += period;
@@ -281,8 +281,8 @@ void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
   velocity_error.setZero();
 
   // --- Pose Error  --- //     
-  // position_d_        << position + velocity_d_*dt_;
-  // pose_error.head(3) << position - position_d_;
+  position_d_        << position + velocity_d_*dt_*200; //Scaling to make it faster!
+  pose_error.head(3) << position - position_d_;
 
   // orientation error
   if (orientation_d_.coeffs().dot(orientation.coeffs()) < 0.0) {
@@ -291,21 +291,22 @@ void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
   // "difference" quaternion
   Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d_);
   pose_error.tail(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
+  
   // Transform to base frame
   pose_error.tail(3) << -transform.linear() * pose_error.tail(3);
-  ROS_INFO_STREAM("pose error: " << pose_error.norm());
+  ROS_WARN_STREAM("orient error: " << pose_error.norm());
 
   // --- Velocity Error --- //
   velocity_error << velocity - velocity_desired_;
-  ROS_INFO_STREAM("velocity error: " << velocity_error.norm());
+  ROS_INFO_STREAM("lin. velocity error: " << velocity_error.norm());
 
-  // --- Cartesian PD control with damping ratio = 1 (only ff velocity term) --- //
-  // tau_task << jacobian.transpose() *(-cartesian_stiffness_ * pose_error - cartesian_damping_ * velocity);
+  // --- Cartesian PD control with damping ratio = 1 (pose control error + ff velocity term) --- //
+  tau_task << jacobian.transpose() *(-cartesian_stiffness_ * pose_error - cartesian_damping_ * velocity);
 
-  // --- Cartesian PD control with damping ratio = 1 (full PD control with pose and velocity error) --- //
-  tau_task << jacobian.transpose() *(-cartesian_stiffness_ * pose_error - cartesian_damping_ * velocity_error);
+  // -- Cartesian D controller tracking linear velocity P controller for orientation -- //
+  // tau_task << jacobian.transpose() *(-cartesian_stiffness_ * pose_error - cartesian_damping_ * velocity_error);
 
-  ROS_INFO_STREAM("tau task: " << tau_task);
+  // ROS_INFO_STREAM("tau task: " << tau_task);
 
   // pseudoinverse for nullspace handling
   // kinematic pseudoinverse
@@ -317,7 +318,10 @@ void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
                     jacobian.transpose() * jacobian_transpose_pinv) *
                        (nullspace_stiffness_ * (q_d_nullspace_ - q) -
                         (2.0 * sqrt(nullspace_stiffness_)) * dq);
-
+  double tau_nullspace_0 = tau_nullspace(0);
+  tau_nullspace.setZero();
+  tau_nullspace[0] = tau_nullspace_0;                     
+                       
   // Compute tool compensation (scoop/camera in scooping task)
   if (activate_tool_compensation_)
     tau_tool << jacobian.transpose() * tool_compensation_force_;

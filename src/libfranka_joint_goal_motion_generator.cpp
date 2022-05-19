@@ -69,32 +69,32 @@ int main(int argc, char** argv) {
 
           break;
        case 2  :
-        std::cout << "Selected q_init_scoop as goal" << std::endl;
-          q_goal = {{-0.2587090488839568, -0.18067890287296676, -0.1481914834306951, -2.2218669233824073, 1.2397120203356886, 1.6055843360223088, -0.2564202219950203}};
+        std::cout << "Selected q_pick as goal" << std::endl;
+          q_goal = {{-0.542943401353401, 0.28187752648403763, -0.36353780205626235, -1.6254522685168082, 0.12447580540091537, 1.9568485025564828, -0.2251955777760423}};
           break;
+
        case 3  :
-        std::cout << "Selected q_right_plate as goal" << std::endl;
-          q_goal = {{-0.5133883270192566, 0.2710828751293255, -0.300302759789584, -1.807947067027922, 1.3988803114257669, 1.3803889200108581, -0.31572859715720264}};
+        std::cout << "Selected q_release as goal" << std::endl;
+          q_goal = {{0.6232106392258092, 0.4991823822363217, 0.30459266481276853, -1.3196656081426748, -0.19566767448184402, 1.825254593404243, 1.6828069603029223}};
           break;
+       // case 4  :
+       //  std::cout << "Selected q_center_plate as goal" << std::endl;
+       //    q_goal = {{-0.1478659114867632, 0.20867810028895994, -0.3032390865134677, -2.0419724096954726, 1.4192992324987155, 1.480286537010783, -0.4761567130958154}};
+       //    break;
 
-       case 4  :
-        std::cout << "Selected q_center_plate as goal" << std::endl;
-          q_goal = {{-0.1478659114867632, 0.20867810028895994, -0.3032390865134677, -2.0419724096954726, 1.4192992324987155, 1.480286537010783, -0.4761567130958154}};
-          break;
-
-       case 5  :
-        std::cout << "Selected q_left_table_setting as goal" << std::endl;
-        q_goal = {{-0.024844449233219813, 0.21341741475306059, 0.1671374870475969, -1.9734624159963505, 1.6724220574752517, 2.054275230565774, -0.36437520284810354}};
-        break;
+       // case 5  :
+       //  std::cout << "Selected q_left_table_setting as goal" << std::endl;
+       //  q_goal = {{-0.024844449233219813, 0.21341741475306059, 0.1671374870475969, -1.9734624159963505, 1.6724220574752517, 2.054275230565774, -0.36437520284810354}};
+       //  break;
           
-       case 6 :
-        std::cout << "Selected q_left_table_setting as goal" << std::endl;
-        q_goal = {{-0.3359993156361998, -0.1753333669566437, 0.2292614262647741, -1.941019418460696, 0.08810859725369569, 1.9533451146157188, 0.7877697710477642}};
-        break;
+       // case 6 :
+       //  std::cout << "Selected q_left_table_setting as goal" << std::endl;
+       //  q_goal = {{-0.3359993156361998, -0.1753333669566437, 0.2292614262647741, -1.941019418460696, 0.08810859725369569, 1.9533451146157188, 0.7877697710477642}};
+       //  break;
 
     }
   
-    MotionGenerator motion_generator(0.6, q_goal);
+    MotionGenerator motion_generator(0.5, q_goal);
     std::cout << "WARNING: This example will move the robot! "
               << "Please make sure to have the user stop button at hand!" << std::endl
               << "Press Enter to continue..." << std::endl;
