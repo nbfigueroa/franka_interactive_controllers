@@ -37,7 +37,7 @@ $ rm -rf *
 $ roslaunch franka_interactive_controllers franka_interactive_bringup.launch
 ```
 
-### 3. To execute a learned motion policy load franka-lpvds tasks (in one terminal):
+### 2. To execute a learned motion policy load franka-lpvds tasks (in one terminal):
 
 #### To run the PICKING DS, run the following:
 ```
@@ -53,6 +53,20 @@ This will run DS1 (pick block) with target 1. Targets denoted on box. Options ar
 ```
 $ roslaunch ds_motion_generator franka_inspection_lpvDS_motionGenerator.launch ds_num:=2
 ```
+
+### 1. On this PC you can show the learned trajectories from MATLAB:
+- Open MATLABm in terminal write the following:
+```
+$ run_matlab
+```
+Navigate to: `` /home/nadiafig/code/auto-ds-learning/figs``
+Open the files: ``franka-inspection-ds1.fig`` and ``franka-inspection-ds2.fig``
+
+You should see this:
+ <p align="center">
+      <img src="doc/img/DS-learned.png" width="700x"> 
+  </p>
+
 
 ### Alternative [extra demo]: If you want to record demos then you can run the following and click "record" in the pop-up GUI:
 ```
