@@ -44,8 +44,8 @@ $ roslaunch franka_interactive_controllers franka_interactive_bringup.launch
 $ roslaunch ds_motion_generator franka_inspection_lpvDS_motionGenerator.launch ds_num:=1_1
 ```
 This will run DS1 (pick block) with target 1. Targets denoted on box. Options are:
-- 1_1: top-left
-- 1_2: top-right
+- 1_1: top-right
+- 1_2: top-left
 - 1_3: bottom-left
 - 1_4: bottom-right
 
