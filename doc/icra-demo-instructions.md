@@ -55,7 +55,7 @@ $ roslaunch ds_motion_generator franka_inspection_lpvDS_motionGenerator.launch d
 ```
 
 ### 1. On this PC you can show the learned trajectories from MATLAB:
-- Open MATLABm in terminal write the following:
+- Open MATLAB in terminal write the following:
 ```
 $ run_matlab
 ```
