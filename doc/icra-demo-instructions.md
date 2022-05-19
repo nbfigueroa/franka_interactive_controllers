@@ -2,7 +2,7 @@
 
 ## On Old Lenovo Laptop (running the RT-Kernel Ubuntu 18)
 
-Befor starting execution of the task send robot to home joint position (franka_control_interactive.launch should NOT BE running -- make sure robot is not near a collision before running this! You can move the robot manually first):
+###0. Befor2 starting execution of the task send robot to home joint position (franka_control_interactive.launch should NOT BE running -- make sure robot is not near a collision before running this! You can move the robot manually first):
 ```
 $ rosrun franka_interactive_controllers libfranka_joint_goal_motion_generator 1
 ```
@@ -17,7 +17,7 @@ $ roslaunch franka_interactive_controllers franka_control_interactive.launch
 $ roslaunch franka_interactive_controllers cartesian_twist_impedance_controller.launch
 ```
 
-### 2 alternative [extra demo]: To record demonstrations you can run the gravity compensation controller (in another terminal):
+### [extra demo]: To record demonstrations you can run the gravity compensation controller (in another terminal):
 ```
 $ roslaunch franka_interactive_controllers joint_gravity_compensation_controller.launch
 ```
@@ -37,11 +37,21 @@ $ rm -rf *
 $ roslaunch franka_interactive_controllers franka_interactive_bringup.launch
 ```
 
-### 2. In the GUI set translational stiffness to 300
-
 ### 3. To execute a learned motion policy load franka-lpvds tasks (in one terminal):
+
+#### To run the PICKING DS, run the following:
 ```
-$ ...
+$ roslaunch ds_motion_generator franka_inspection_lpvDS_motionGenerator.launch ds_num:=1_1
+```
+This will run DS1 (pick block) with target 1. Targets denoted on box. Options are:
+- 1_1: top-left
+- 1_2: top-right
+- 1_3: bottom-left
+- 1_4: bottom-right
+
+#### To run the INSPECTION-RELEASE DS, run the following:
+```
+$ roslaunch ds_motion_generator franka_inspection_lpvDS_motionGenerator.launch ds_num:=2
 ```
 
 ### Alternative [extra demo]: If you want to record demos then you can run the following and click "record" in the pop-up GUI:
