@@ -1,4 +1,4 @@
-# ICRA 2022 Inspection Task Demo Instructions
+# MIT MUSEUM Interactive Inspection Task Demo Instructions
 
 ## On Old Lenovo Laptop (running the RT-Kernel Ubuntu 18)
 
