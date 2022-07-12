@@ -19,6 +19,7 @@
   <build_export_depend>message_runtime</build_export_depend>
 
   <depend>controller_interface</depend>
+  <depend>passive_ds_control</depend>
   <depend>dynamic_reconfigure</depend>
   <depend>eigen_conversions</depend>
   <depend>franka_hw</depend>

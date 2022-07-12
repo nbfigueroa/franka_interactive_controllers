@@ -5,7 +5,7 @@
   <arg name="use_gripper_gui"            default="false" />
   <arg name="load_franka_control"        default="false" />
   <arg name="load_kinesthetic_teaching"  default="true" />
-  <arg name="path_save_rosbag"           default="/home/nadiafig/recordings/icra-22-demo/bags/"/>
+  <arg name="path_save_rosbag"           default="/home/nadiafig/recordings/gripper-prototypes/bags/"/>
   <arg name="topics_rosbag"       
     default="/tf 
     /franka_state_controller/joint_states 
