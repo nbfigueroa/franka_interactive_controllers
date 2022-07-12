@@ -301,10 +301,11 @@ void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
   ROS_INFO_STREAM("lin. velocity error: " << velocity_error.norm());
 
   // --- Cartesian PD control with damping ratio = 1 (pose control error + ff velocity term) --- //
-  tau_task << jacobian.transpose() *(-cartesian_stiffness_ * pose_error - cartesian_damping_ * velocity);
+  tau_task << jacobian.transpose() *(-cartesian_stiffness_ * pose_error - cartesian_damping_ * (jacobian * dq));
 
   // -- Cartesian D controller tracking linear velocity P controller for orientation -- //
-  // tau_task << jacobian.transpose() *(-cartesian_stiffness_ * pose_error - cartesian_damping_ * velocity_error);
+  // pose_error.head(3) << 0,0,0;
+  // tau_task << jacobian.transpose() *(-cartesian_stiffness_ * pose_error - *cartesian_damping_ * (velocity_error));
 
   // ROS_INFO_STREAM("tau task: " << tau_task);
 
@@ -318,9 +319,9 @@ void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
                     jacobian.transpose() * jacobian_transpose_pinv) *
                        (nullspace_stiffness_ * (q_d_nullspace_ - q) -
                         (2.0 * sqrt(nullspace_stiffness_)) * dq);
-  double tau_nullspace_0 = tau_nullspace(0);
+  double tau_nullspace_0(tau_nullspace(0));
   tau_nullspace.setZero();
-  tau_nullspace[0] = tau_nullspace_0;                     
+  tau_nullspace[0] = tau_nullspace_0;                    
                        
   // Compute tool compensation (scoop/camera in scooping task)
   if (activate_tool_compensation_)
