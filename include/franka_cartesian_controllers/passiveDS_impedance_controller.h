@@ -99,6 +99,7 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
   Vec                 F_linear_des_;     // desired linear force 
   Vec                 F_angular_des_;     // desired angular force
   Eigen::VectorXd     F_ee_des_;         // desired end-effector force
+  Vec                 orient_error;
   bool                bDebug;
   bool                bSmooth;
   double              smooth_val_;
@@ -107,8 +108,15 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
   boost::scoped_ptr<DSController>   passive_ds_controller;
 
   /// Dynamic reconfigure
-  boost::scoped_ptr<dynamic_reconfigure::Server<franka_interactive_controllers::passive_ds_paramConfig>>     
-  dynamic_server_passive_ds_param_;
+  // boost::scoped_ptr<dynamic_reconfigure::Server<franka_interactive_controllers::passive_ds_paramConfig>>     
+  // dynamic_server_passive_ds_param_;
+  // ros::NodeHandle dynamic_reconfigure_passive_ds_param_node_;
+  // void passiveDSParamCallback(franka_interactive_controllers::passive_ds_paramConfig& config,
+  //                              uint32_t level);
+
+  // Dynamic reconfigure
+  std::unique_ptr<dynamic_reconfigure::Server<franka_interactive_controllers::passive_ds_paramConfig>>
+      dynamic_server_passive_ds_param_;
   ros::NodeHandle dynamic_reconfigure_passive_ds_param_node_;
   void passiveDSParamCallback(franka_interactive_controllers::passive_ds_paramConfig& config,
                                uint32_t level);

@@ -22,6 +22,19 @@ cartesian_twist_impedance_controller:
         - panda_joint6
         - panda_joint7
 
+passive_ds_impedance_controller:
+    type: franka_interactive_controllers/PassiveDSImpedanceController
+    arm_id: panda
+    joint_names:
+        - panda_joint1
+        - panda_joint2
+        - panda_joint3
+        - panda_joint4
+        - panda_joint5
+        - panda_joint6
+        - panda_joint7
+
+
 joint_gravity_compensation_controller:
     type: franka_interactive_controllers/JointGravityCompensationController
     arm_id: panda

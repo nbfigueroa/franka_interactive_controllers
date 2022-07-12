@@ -150,10 +150,10 @@ bool PassiveDSImpedanceController::init(hardware_interface::RobotHW* robot_hw,
   /// Getting Dynamic Reconfigure objects for controllers
   dynamic_reconfigure_passive_ds_param_node_ =
     ros::NodeHandle(node_handle.getNamespace() + "dynamic_reconfigure_passive_ds_param_node");
-  // dynamic_server_passive_ds_param_ = std::make_unique<
-    // dynamic_reconfigure::Server<franka_interactive_controllers::passive_ds_paramConfig>>(dynamic_reconfigure_passive_ds_param_node_);
+  dynamic_server_passive_ds_param_ = std::make_unique<
+    dynamic_reconfigure::Server<franka_interactive_controllers::passive_ds_paramConfig>>(dynamic_reconfigure_passive_ds_param_node_);
     //This line might not be necessary
-  dynamic_server_passive_ds_param_.reset(new dynamic_reconfigure::Server<franka_interactive_controllers::passive_ds_paramConfig>(dynamic_reconfigure_passive_ds_param_node_));
+  // dynamic_server_passive_ds_param_.reset(new dynamic_reconfigure::Server<franka_interactive_controllers::passive_ds_paramConfig>(dynamic_reconfigure_passive_ds_param_node_));
   dynamic_server_passive_ds_param_->setCallback(
     boost::bind(&PassiveDSImpedanceController::passiveDSParamCallback, this, _1, _2));
   dynamic_server_passive_ds_param_->getConfigDefault(config_cfg);
@@ -161,12 +161,21 @@ bool PassiveDSImpedanceController::init(hardware_interface::RobotHW* robot_hw,
   // Passive DS Variable Initializatin=on
   dx_linear_des_.resize(3);
   dx_linear_msr_.resize(3);
+  orient_error.resize(3);
+  F_linear_des_.resize(3);
+  F_angular_des_.resize(3);
   F_ee_des_.resize(6);
+
+  // Setting with default paramsss
   rot_stiffness = config_cfg.rot_stiffness;
   rot_damping   = config_cfg.rot_damping;
   bDebug      = config_cfg.debug;
   bSmooth     = config_cfg.bSmooth;
   smooth_val_ = config_cfg.smooth_val;
+  cartesian_stiffness_.setIdentity();
+  cartesian_stiffness_.topLeftCorner(3, 3) << config_cfg.translational_stiffness * Eigen::Matrix3d::Identity();
+  cartesian_stiffness_.bottomRightCorner(3, 3) << config_cfg.rotational_stiffness * Eigen::Matrix3d::Identity();
+
 
   // Initializing variables
   position_d_.setZero();
@@ -246,7 +255,7 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   elapsed_time += period;
   if(ros::Time::now().toSec() - last_cmd_time > vel_cmd_timeout){
     velocity_d_.setZero();
-    ROS_WARN_STREAM("Command Timeout!");
+    ROS_WARN_STREAM_THROTTLE(1,"Command Timeout!");
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -295,43 +304,40 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
 
   passive_ds_controller->Update(dx_linear_msr_,dx_linear_des_);
   F_linear_des_ = passive_ds_controller->control_output(); // (3 x 1)
-
-  F_ee_des_(0) = F_linear_des_(0);
-  F_ee_des_(1) = F_linear_des_(1);
-  F_ee_des_(2) = F_linear_des_(2);
+  F_ee_des_.head(3) = F_linear_des_;
 
   // ----------------- Debug -----------------------//
-  ROS_WARN_STREAM_THROTTLE(1, "Desired Velocity :" << dx_linear_des_(0) << " " << dx_linear_des_(1) <<  " " << dx_linear_des_(2));
-  ROS_WARN_STREAM_THROTTLE(1, "Linear Control Forces :" << F_linear_des_(0) << " " << F_linear_des_(1) << " " << F_linear_des_(2));
-  F_ee_des_.head(3) = F_linear_des_; // Does this work?    
-  ROS_WARN_STREAM_THROTTLE(1, "Linear Control Forces :" << F_ee_des_(0) << " " << F_ee_des_(1) << " " << F_ee_des_(2));
+  ROS_WARN_STREAM_THROTTLE(1, "Desired Velocity:" << dx_linear_des_(0) << " " << dx_linear_des_(1) <<  " " << dx_linear_des_(2));
+  Vec dx_error_;
+  dx_error_.resize(3);
+  dx_error_ = dx_linear_msr_ - dx_linear_des_;
+
+  // ROS_WARN_STREAM_THROTTLE(1, "Current Velocity :" << dx_linear_msr_(0) << " " << dx_linear_msr_(1) <<  " " << dx_linear_msr_(2));
+  ROS_WARN_STREAM_THROTTLE(1, "Current Velocity Error:" << dx_error_.norm());
+  ROS_WARN_STREAM_THROTTLE(1, "Linear Control Forces :" << F_ee_des_(0) << " " << F_ee_des_(1) << " " << F_ee_des_(2));    
 
   // ----------------- Orientation Error -> Force -----------------------// 
-  //(Potentially change to stiffness+damping orientation controller)
+  //(Potentially change to stiffness+damping orientation controller as in kuka-lwr controller)
 
-  Vec orient_error;
+  // Vec orient_error;
   orient_error.setZero();
 
   // orientation error
   if (orientation_d_.coeffs().dot(orientation.coeffs()) < 0.0) {
   orientation.coeffs() << -orientation.coeffs();
   }
-  // "difference" quaternion
   Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d_);
   orient_error << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
+
   F_angular_des_ << -cartesian_stiffness_.bottomRightCorner(3, 3)*orient_error;
-  F_ee_des_(3) = F_angular_des_(0);
-  F_ee_des_(4) = F_angular_des_(1);
-  F_ee_des_(5) = F_angular_des_(2);
+  F_ee_des_.tail(3) = F_angular_des_; 
 
   // ----------------- Debug -----------------------//
-  ROS_WARN_STREAM_THROTTLE(1, "Desired Orientation Error :" << orient_error(0) << " " << orient_error(1) <<  " " << orient_error(2));
-  ROS_WARN_STREAM_THROTTLE(1, "Angular Control Forces :" << F_angular_des_(0) << " " << F_angular_des_(1) << " " << F_angular_des_(2));
-  F_ee_des_.tail(3) = F_angular_des_; // Does this work?    
-  ROS_WARN_STREAM_THROTTLE(1, "Angular Control Forces :" << F_ee_des_(3) << " " << F_ee_des_(4) << " " << F_ee_des_(5));
-
+  // ROS_WARN_STREAM_THROTTLE(1, "Desired Orientation Error :" << orient_error(0) << " " << orient_error(1) <<  " " << orient_error(2));
+  // ROS_WARN_STREAM_THROTTLE(1, "Angular Control Force :" << F_ee_des_.tail(3).norm());
 
   // Convert control wrench to torque
+  ROS_WARN_STREAM_THROTTLE(1, "Passive DS Linear Control Force:" << F_ee_des_.head(3).norm());
   tau_task_passive << jacobian.transpose() *F_ee_des_;
 
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -360,14 +366,15 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   
   // Transform to base frame
   pose_error.tail(3) << -transform.linear() * pose_error.tail(3);
-  ROS_WARN_STREAM("orient error: " << pose_error.norm());
+  // ROS_WARN_STREAM_THROTTLE(1,"orient error: " << pose_error.norm());
 
   // Computing control torque from cartesian pose error form integrated velocity command
-  tau_task << jacobian.transpose() *(-cartesian_stiffness_ * pose_error - cartesian_damping_ * velocity);
-
+  F_ee_des_ << -cartesian_stiffness_ * pose_error - cartesian_damping_ * velocity;
+  tau_task << jacobian.transpose() * F_ee_des_;
+  ROS_WARN_STREAM_THROTTLE(1, "Classic Linear Control Force:" << F_ee_des_.head(3).norm());
+  ROS_WARN_STREAM_THROTTLE(1, "Classic Angular Control Force :" << F_ee_des_.tail(3).norm());
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
   //++++++++++++++ ADDITIONAL CONTROL TORQUES (NULLSPACE AND TOOL COMPENSATION) ++++++++++++++//
