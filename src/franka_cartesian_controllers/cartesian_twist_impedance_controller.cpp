@@ -159,41 +159,41 @@ bool CartesianTwistImpedanceController::init(hardware_interface::RobotHW* robot_
   cartesian_stiffness_.setZero();
   cartesian_damping_.setZero();
 
-  // Parameters for goto_home at initialization!!
-  _goto_home = false;
+  // // Parameters for goto_home at initialization!!
+  // _goto_home = false;
 
-  // Parameters for jointDS controller (THIS SHOULD BE IN ANOTHER SCRIPT!! DS MOTION GENERATOR?)
-  q_home_ << 0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4;
-  jointDS_epsilon_  = 0.05;
-  dq_filter_params_ = 0.555;
+  // // Parameters for jointDS controller (THIS SHOULD BE IN ANOTHER SCRIPT!! DS MOTION GENERATOR?)
+  // q_home_ << 0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4;
+  // jointDS_epsilon_  = 0.05;
+  // dq_filter_params_ = 0.555;
 
-  A_jointDS_home_ = Eigen::MatrixXd::Identity(7, 7);
-  A_jointDS_home_(0,0) = 10; A_jointDS_home_(1,1) = 10; A_jointDS_home_(2,2) = 10;
-  A_jointDS_home_(3,3) = 10; A_jointDS_home_(4,4) = 15; A_jointDS_home_(5,5) = 15;
-  A_jointDS_home_(6,6) = 15;
-  ROS_INFO_STREAM("A (jointDS): " << std::endl <<  A_jointDS_home_);
+  // A_jointDS_home_ = Eigen::MatrixXd::Identity(7, 7);
+  // A_jointDS_home_(0,0) = 10; A_jointDS_home_(1,1) = 10; A_jointDS_home_(2,2) = 10;
+  // A_jointDS_home_(3,3) = 10; A_jointDS_home_(4,4) = 15; A_jointDS_home_(5,5) = 15;
+  // A_jointDS_home_(6,6) = 15;
+  // ROS_INFO_STREAM("A (jointDS): " << std::endl <<  A_jointDS_home_);
 
-  // Parameters for joint PD controller
-  // Ideal gains for Joint Impedance Controller
-  // k_gains: 600.0, 600.0, 600.0, 600.0, 250.0, 150.0, 50.0
-  // d_gains: 50.0, 50.0, 50.0, 20.0, 20.0, 20.0, 10.0
+  // // Parameters for joint PD controller
+  // // Ideal gains for Joint Impedance Controller
+  // // k_gains: 600.0, 600.0, 600.0, 600.0, 250.0, 150.0, 50.0
+  // // d_gains: 50.0, 50.0, 50.0, 20.0, 20.0, 20.0, 10.0
 
-  // Gains for P error stiffness term
-  k_joint_gains_ = Eigen::MatrixXd::Identity(7, 7);
-  k_joint_gains_(0,0) = 500; k_joint_gains_(1,1) = 500; k_joint_gains_(2,2) = 500;
-  k_joint_gains_(3,3) = 500; k_joint_gains_(4,4) = 500; k_joint_gains_(5,5) = 500;
-  k_joint_gains_(6,6) = 200;
-  ROS_INFO_STREAM("K (joint stiffness): " << std::endl <<  k_joint_gains_);
+  // // Gains for P error stiffness term
+  // k_joint_gains_ = Eigen::MatrixXd::Identity(7, 7);
+  // k_joint_gains_(0,0) = 500; k_joint_gains_(1,1) = 500; k_joint_gains_(2,2) = 500;
+  // k_joint_gains_(3,3) = 500; k_joint_gains_(4,4) = 500; k_joint_gains_(5,5) = 500;
+  // k_joint_gains_(6,6) = 200;
+  // ROS_INFO_STREAM("K (joint stiffness): " << std::endl <<  k_joint_gains_);
 
-  // Gains for D error damping term
-  d_joint_gains_ = Eigen::MatrixXd::Identity(7, 7);
-  ROS_INFO_STREAM("D (joint damping): " << std::endl << d_joint_gains_);
-  d_joint_gains_(0,0) = 5; d_joint_gains_(1,1) = 5; d_joint_gains_(2,2) = 5;
-  d_joint_gains_(3,3) = 2; d_joint_gains_(4,4) = 2; d_joint_gains_(5,5) = 2;
-  d_joint_gains_(6,6) = 1;
+  // // Gains for D error damping term
+  // d_joint_gains_ = Eigen::MatrixXd::Identity(7, 7);
+  // ROS_INFO_STREAM("D (joint damping): " << std::endl << d_joint_gains_);
+  // d_joint_gains_(0,0) = 5; d_joint_gains_(1,1) = 5; d_joint_gains_(2,2) = 5;
+  // d_joint_gains_(3,3) = 2; d_joint_gains_(4,4) = 2; d_joint_gains_(5,5) = 2;
+  // d_joint_gains_(6,6) = 1;
 
-  // Gains for feed-forward damping term
-  d_ff_joint_gains_ = Eigen::MatrixXd::Identity(7, 7);
+  // // Gains for feed-forward damping term
+  // d_ff_joint_gains_ = Eigen::MatrixXd::Identity(7, 7);
 
 
   return true;
@@ -274,11 +274,13 @@ void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
   // allocate variables
   Eigen::VectorXd tau_task(7), tau_nullspace(7), tau_d(7), tau_tool(7);
 
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+  //++++++++++++++ CLASSICAL IMPEDANCE CONTROL FOR CARTESIAN COMMAND ++++++++++++++//
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
   // Compute task-space errors
   Eigen::Matrix<double, 6, 1> pose_error;
-  Eigen::Matrix<double, 6, 1> velocity_error;
   pose_error.setZero();
-  velocity_error.setZero();
 
   // --- Pose Error  --- //     
   position_d_        << position + velocity_d_*dt_*200; //Scaling to make it faster!
@@ -289,25 +291,24 @@ void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
     orientation.coeffs() << -orientation.coeffs();
   }
   // "difference" quaternion
-  Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d_);
+  // Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d_);
   pose_error.tail(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
-  
   // Transform to base frame
   pose_error.tail(3) << -transform.linear() * pose_error.tail(3);
-  ROS_WARN_STREAM("orient error: " << pose_error.norm());
 
-  // --- Velocity Error --- //
-  velocity_error << velocity - velocity_desired_;
-  ROS_INFO_STREAM("lin. velocity error: " << velocity_error.norm());
+  // Computing control torque from cartesian pose error from integrated velocity command
+  F_ee_des_ << -cartesian_stiffness_ * pose_error - cartesian_damping_ * velocity;
+  tau_task << jacobian.transpose() * F_ee_des_;
 
-  // --- Cartesian PD control with damping ratio = 1 (pose control error + ff velocity term) --- //
-  tau_task << jacobian.transpose() *(-cartesian_stiffness_ * pose_error - cartesian_damping_ * (jacobian * dq));
+  ROS_WARN_STREAM_THROTTLE(0.5, "Classic Linear Control Force:" << F_ee_des_.head(3).norm());
+  ROS_WARN_STREAM_THROTTLE(0.5, "Classic Angular Control Force :" << F_ee_des_.tail(3).norm());
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-  // -- Cartesian D controller tracking linear velocity P controller for orientation -- //
-  // pose_error.head(3) << 0,0,0;
-  // tau_task << jacobian.transpose() *(-cartesian_stiffness_ * pose_error - *cartesian_damping_ * (velocity_error));
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+  //++++++++++++++ ADDITIONAL CONTROL TORQUES (NULLSPACE AND TOOL COMPENSATION) ++++++++++++++//
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-  // ROS_INFO_STREAM("tau task: " << tau_task);
 
   // pseudoinverse for nullspace handling
   // kinematic pseudoinverse
@@ -319,9 +320,9 @@ void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
                     jacobian.transpose() * jacobian_transpose_pinv) *
                        (nullspace_stiffness_ * (q_d_nullspace_ - q) -
                         (2.0 * sqrt(nullspace_stiffness_)) * dq);
-  double tau_nullspace_0(tau_nullspace(0));
+  double tau_nullspace_0 = tau_nullspace(0);
   tau_nullspace.setZero();
-  tau_nullspace[0] = tau_nullspace_0;                    
+  tau_nullspace[0] = tau_nullspace_0;                     
                        
   // Compute tool compensation (scoop/camera in scooping task)
   if (activate_tool_compensation_)
@@ -329,7 +330,7 @@ void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
   else
     tau_tool.setZero();
 
-  // Desired torque
+  // FINAL DESIRED CONTROL TORQUE SENT TO ROBOT
   tau_d << tau_task + tau_nullspace + coriolis - tau_tool;
 
   // Saturate torque rate to avoid discontinuities
