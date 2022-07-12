@@ -15,6 +15,8 @@
 
 #include <pseudo_inversion.h>
 #include <hardware_interface/joint_command_interface.h>
+#include <control_toolbox/filters.h>
+
 
 namespace franka_interactive_controllers {
 
@@ -157,8 +159,9 @@ bool PassiveDSImpedanceController::init(hardware_interface::RobotHW* robot_hw,
   dynamic_server_passive_ds_param_->getConfigDefault(config_cfg);
 
   // Passive DS Variable Initializatin=on
-    dx_linear_des_.resize(3);
-    dx_linear_msr_.resize(3);
+  dx_linear_des_.resize(3);
+  dx_linear_msr_.resize(3);
+  F_ee_des_.resize(6);
   rot_stiffness = config_cfg.rot_stiffness;
   rot_damping   = config_cfg.rot_damping;
   bDebug      = config_cfg.debug;
@@ -237,7 +240,7 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   velocity << jacobian * dq;
   velocity_desired_.setZero();
   velocity_desired_.head(3) << velocity_d_;
-  ROS_INFO_STREAM("current speed: " << velocity.norm());
+  // ROS_INFO_STREAM("current linear velocity: " << velocity.head(3));
 
   // Check velocity command
   elapsed_time += period;
@@ -252,13 +255,96 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
 
   // compute control
   // allocate variables
-  Eigen::VectorXd tau_task(7), tau_nullspace(7), tau_d(7), tau_tool(7);
+  Eigen::VectorXd tau_task(7), tau_task_passive(7), tau_nullspace(7), tau_d(7), tau_tool(7);
+
+
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+  //++++++++++++++ PASSIVE DS CONTROL FOR CARTESIAN COMMAND ++++++++++++++//
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
+  F_ee_des_.setZero();
+
+  /// set desired linear velocity
+  dx_linear_des_(0)   = velocity_d_(0);
+  dx_linear_des_(1)   = velocity_d_(1);
+  dx_linear_des_(2)   = velocity_d_(2);
+
+
+  /// set measured linear and angular velocity
+  if(bSmooth)
+  {
+  dx_linear_msr_(0)   = velocity(0);
+  dx_linear_msr_(1)   = velocity(1);
+  dx_linear_msr_(2)   = velocity(2);
+
+  // dx_angular_msr_(0)  = x_msr_vel_.rot(0);
+  // dx_angular_msr_(1)  = x_msr_vel_.rot(1);
+  // dx_angular_msr_(2)  = x_msr_vel_.rot(2);
+  }else{
+  dx_linear_msr_(0)    = filters::exponentialSmoothing(velocity(0), dx_linear_msr_(0),smooth_val_);
+  dx_linear_msr_(1)    = filters::exponentialSmoothing(velocity(1), dx_linear_msr_(2),smooth_val_);
+  dx_linear_msr_(2)    = filters::exponentialSmoothing(velocity(2), dx_linear_msr_(1),smooth_val_);
+
+  // dx_angular_msr_(0)   = filters::exponentialSmoothing(x_msr_vel_.rot(0), dx_angular_msr_(0),smooth_val_);
+  // dx_angular_msr_(1)   = filters::exponentialSmoothing(x_msr_vel_.rot(1), dx_angular_msr_(2),smooth_val_);
+  // dx_angular_msr_(2)   = filters::exponentialSmoothing(x_msr_vel_.rot(2), dx_angular_msr_(1),smooth_val_);
+  }
+
+
+  // ----------------- Linear Velocity Error -> Force -----------------------//
+
+  passive_ds_controller->Update(dx_linear_msr_,dx_linear_des_);
+  F_linear_des_ = passive_ds_controller->control_output(); // (3 x 1)
+
+  F_ee_des_(0) = F_linear_des_(0);
+  F_ee_des_(1) = F_linear_des_(1);
+  F_ee_des_(2) = F_linear_des_(2);
+
+  // ----------------- Debug -----------------------//
+  ROS_WARN_STREAM_THROTTLE(1, "Desired Velocity :" << dx_linear_des_(0) << " " << dx_linear_des_(1) <<  " " << dx_linear_des_(2));
+  ROS_WARN_STREAM_THROTTLE(1, "Linear Control Forces :" << F_linear_des_(0) << " " << F_linear_des_(1) << " " << F_linear_des_(2));
+  F_ee_des_.head(3) = F_linear_des_; // Does this work?    
+  ROS_WARN_STREAM_THROTTLE(1, "Linear Control Forces :" << F_ee_des_(0) << " " << F_ee_des_(1) << " " << F_ee_des_(2));
+
+  // ----------------- Orientation Error -> Force -----------------------// 
+  //(Potentially change to stiffness+damping orientation controller)
+
+  Vec orient_error;
+  orient_error.setZero();
+
+  // orientation error
+  if (orientation_d_.coeffs().dot(orientation.coeffs()) < 0.0) {
+  orientation.coeffs() << -orientation.coeffs();
+  }
+  // "difference" quaternion
+  Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d_);
+  orient_error << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
+  F_angular_des_ << -cartesian_stiffness_.bottomRightCorner(3, 3)*orient_error;
+  F_ee_des_(3) = F_angular_des_(0);
+  F_ee_des_(4) = F_angular_des_(1);
+  F_ee_des_(5) = F_angular_des_(2);
+
+  // ----------------- Debug -----------------------//
+  ROS_WARN_STREAM_THROTTLE(1, "Desired Orientation Error :" << orient_error(0) << " " << orient_error(1) <<  " " << orient_error(2));
+  ROS_WARN_STREAM_THROTTLE(1, "Angular Control Forces :" << F_angular_des_(0) << " " << F_angular_des_(1) << " " << F_angular_des_(2));
+  F_ee_des_.tail(3) = F_angular_des_; // Does this work?    
+  ROS_WARN_STREAM_THROTTLE(1, "Angular Control Forces :" << F_ee_des_(3) << " " << F_ee_des_(4) << " " << F_ee_des_(5));
+
+
+  // Convert control wrench to torque
+  tau_task_passive << jacobian.transpose() *F_ee_des_;
+
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
+
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+  //++++++++++++++ CLASSICAL IMPEDANCE CONTROL FOR CARTESIAN COMMAND ++++++++++++++//
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
   // Compute task-space errors
   Eigen::Matrix<double, 6, 1> pose_error;
-  Eigen::Matrix<double, 6, 1> velocity_error;
   pose_error.setZero();
-  velocity_error.setZero();
 
   // --- Pose Error  --- //     
   position_d_        << position + velocity_d_*dt_*200; //Scaling to make it faster!
@@ -269,24 +355,24 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
     orientation.coeffs() << -orientation.coeffs();
   }
   // "difference" quaternion
-  Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d_);
+  // Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d_);
   pose_error.tail(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
   
   // Transform to base frame
   pose_error.tail(3) << -transform.linear() * pose_error.tail(3);
   ROS_WARN_STREAM("orient error: " << pose_error.norm());
 
-  // --- Velocity Error --- //
-  velocity_error << velocity - velocity_desired_;
-  ROS_INFO_STREAM("lin. velocity error: " << velocity_error.norm());
-
-  // --- Cartesian PD control with damping ratio = 1 (pose control error + ff velocity term) --- //
+  // Computing control torque from cartesian pose error form integrated velocity command
   tau_task << jacobian.transpose() *(-cartesian_stiffness_ * pose_error - cartesian_damping_ * velocity);
 
-  // -- Cartesian D controller tracking linear velocity P controller for orientation -- //
-  // tau_task << jacobian.transpose() *(-cartesian_stiffness_ * pose_error - cartesian_damping_ * velocity_error);
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-  // ROS_INFO_STREAM("tau task: " << tau_task);
+
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+  //++++++++++++++ ADDITIONAL CONTROL TORQUES (NULLSPACE AND TOOL COMPENSATION) ++++++++++++++//
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
 
   // pseudoinverse for nullspace handling
   // kinematic pseudoinverse
@@ -308,7 +394,7 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   else
     tau_tool.setZero();
 
-  // Desired torque
+  // FINAL DESIRED CONTROL TORQUE SENT TO ROBOT
   tau_d << tau_task + tau_nullspace + coriolis - tau_tool;
 
   // Saturate torque rate to avoid discontinuities
@@ -317,6 +403,7 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_d(i));
   }
+
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -329,9 +416,6 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
       filter_params_ * cartesian_damping_target_ + (1.0 - filter_params_) * cartesian_damping_;
   nullspace_stiffness_ =
       filter_params_ * nullspace_stiffness_target_ + (1.0 - filter_params_) * nullspace_stiffness_;
-  
-  // position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
-  // position_d_ = position_d_target_;
   orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
 }
 

@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(catkin REQUIRED COMPONENTS
   controller_interface
   passive_ds_control
+  control_toolbox
   dynamic_reconfigure
   eigen_conversions
   franka_hw
@@ -42,6 +43,7 @@ catkin_package(
   CATKIN_DEPENDS
     controller_interface
     passive_ds_control
+    control_toolbox
     dynamic_reconfigure
     eigen_conversions
     franka_hw

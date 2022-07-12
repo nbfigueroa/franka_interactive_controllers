@@ -96,6 +96,9 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
   // Initialize DS controller
   Vec                 dx_linear_des_;
   Vec                 dx_linear_msr_;
+  Vec                 F_linear_des_;     // desired linear force 
+  Vec                 F_angular_des_;     // desired angular force
+  Eigen::VectorXd     F_ee_des_;         // desired end-effector force
   bool                bDebug;
   bool                bSmooth;
   double              smooth_val_;
