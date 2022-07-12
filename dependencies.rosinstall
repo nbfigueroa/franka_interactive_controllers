@@ -25,6 +25,11 @@
     version: nadia
 
 - git:
+    local-name: passive-ds-control
+    uri: https://github.com/epfl-lasa/passive-ds-control.git
+    version: master
+
+- git:
     local-name: record_ros
     uri: https://github.com/nbfigueroa/record_ros.git
     version: master
