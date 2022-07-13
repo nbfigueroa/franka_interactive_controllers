@@ -134,26 +134,18 @@ bool PassiveDSImpedanceController::init(hardware_interface::RobotHW* robot_hw,
     }
   }
 
-  // // Getting Dynamic Reconfigure objects == CHANGE THIS TO THE PASSIVE DS PARAMS!!!
-  // dynamic_reconfigure_compliance_param_node_ =
-  //     ros::NodeHandle(node_handle.getNamespace() + "dynamic_reconfigure_compliance_param_node");
-
-  // dynamic_server_compliance_param_ = std::make_unique<
-  //     dynamic_reconfigure::Server<franka_interactive_controllers::passive_ds_paramConfig>>(dynamic_reconfigure_compliance_param_node_);
-  // dynamic_server_compliance_param_->setCallback(
-  //     boost::bind(&PassiveDSImpedanceController::complianceParamCallback, this, _1, _2));
-
-
   // Initialize Passive DS controller
-  passive_ds_controller.reset(new DSController(3,0.0,0.0));
+  max_tank_level_ = 10; //10 in original code
+  dz_ = 0.01;
+  passive_ds_controller.reset(new PassiveDSController(3, 0.0, 0.0, max_tank_level_, dz_)); // ensures passivity
+  // passive_ds_controller.reset(new DSController(3,0.0,0.0)); // ignores passivity
+  
 
   /// Getting Dynamic Reconfigure objects for controllers
   dynamic_reconfigure_passive_ds_param_node_ =
     ros::NodeHandle(node_handle.getNamespace() + "dynamic_reconfigure_passive_ds_param_node");
   dynamic_server_passive_ds_param_ = std::make_unique<
     dynamic_reconfigure::Server<franka_interactive_controllers::passive_ds_paramConfig>>(dynamic_reconfigure_passive_ds_param_node_);
-    //This line might not be necessary
-  // dynamic_server_passive_ds_param_.reset(new dynamic_reconfigure::Server<franka_interactive_controllers::passive_ds_paramConfig>(dynamic_reconfigure_passive_ds_param_node_));
   dynamic_server_passive_ds_param_->setCallback(
     boost::bind(&PassiveDSImpedanceController::passiveDSParamCallback, this, _1, _2));
   dynamic_server_passive_ds_param_->getConfigDefault(config_cfg);
@@ -249,13 +241,12 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   velocity << jacobian * dq;
   velocity_desired_.setZero();
   velocity_desired_.head(3) << velocity_d_;
-  // ROS_INFO_STREAM("current linear velocity: " << velocity.head(3));
 
   // Check velocity command
   elapsed_time += period;
   if(ros::Time::now().toSec() - last_cmd_time > vel_cmd_timeout){
     velocity_d_.setZero();
-    ROS_WARN_STREAM_THROTTLE(1,"Command Timeout!");
+    // ROS_WARN_STREAM_THROTTLE(0.5,"Command Timeout!");
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -294,16 +285,26 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
 
   // ----------------- Linear Velocity Error -> Force -----------------------//
   F_ee_des_.setZero();
-  passive_ds_controller->Update(dx_linear_msr_,dx_linear_des_);
+  passive_ds_controller->Update(dx_linear_msr_,dx_linear_des_); // update ignoring the passivity 
+
+  // update ensuring passivity
+  // passive_ds_controller->UpdatePassive(dx_linear_msr_, dx_linear_des_, dt_);
+
+  // reset tank storage if needed (this could be included in a callback; 
+  // i.e., when we switch the DS or when the human is doing a prolonged pertubation)
+  // passive_ds_controller->reset_storage();
+
   F_linear_des_ = passive_ds_controller->control_output(); // (3 x 1)
   F_ee_des_.head(3) = F_linear_des_;
 
   // ----------------- Debug -----------------------//
   ROS_WARN_STREAM_THROTTLE(0.5, "Desired Velocity:" << dx_linear_des_(0) << " " << dx_linear_des_(1) <<  " " << dx_linear_des_(2));
-  Vec dx_error_;
-  dx_error_.resize(3);
-  dx_error_ = dx_linear_msr_ - dx_linear_des_;
-  ROS_WARN_STREAM_THROTTLE(0.5, "Current Velocity Error:" << dx_error_.norm());
+  ROS_WARN_STREAM_THROTTLE(0.5, "Desired Velocity Norm:" << dx_linear_des_.norm());
+  ROS_WARN_STREAM_THROTTLE(0.5, "Current Velocity Norm:" << dx_linear_msr_.norm());
+  // Vec dx_error_;
+  // dx_error_.resize(3);
+  // dx_error_ = dx_linear_msr_ - dx_linear_des_;
+  // ROS_WARN_STREAM_THROTTLE(0.5, "Current Velocity Error:" << dx_error_.norm());
   ROS_WARN_STREAM_THROTTLE(0.5, "Linear Control Forces :" << F_ee_des_(0) << " " << F_ee_des_(1) << " " << F_ee_des_(2));    
 
 

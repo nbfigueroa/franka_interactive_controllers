@@ -257,13 +257,12 @@ void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
   velocity << jacobian * dq;
   velocity_desired_.setZero();
   velocity_desired_.head(3) << velocity_d_;
-  ROS_INFO_STREAM("current speed: " << velocity.norm());
 
   // Check velocity command
   elapsed_time += period;
   if(ros::Time::now().toSec() - last_cmd_time > vel_cmd_timeout){
     velocity_d_.setZero();
-    ROS_WARN_STREAM("Command Timeout!");
+    // ROS_WARN_STREAM_THROTTLE(0.5,"Command Timeout!");
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -283,7 +282,7 @@ void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
   pose_error.setZero();
 
   // --- Pose Error  --- //     
-  position_d_        << position + velocity_d_*dt_*200; //Scaling to make it faster!
+  position_d_        << position + velocity_d_*dt_*150; //Scaling to make it faster! (200 goes way faster than the desired)
   pose_error.head(3) << position - position_d_;
 
   // orientation error
@@ -291,15 +290,19 @@ void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
     orientation.coeffs() << -orientation.coeffs();
   }
   // "difference" quaternion
-  // Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d_);
+  Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d_);
   pose_error.tail(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
   // Transform to base frame
   pose_error.tail(3) << -transform.linear() * pose_error.tail(3);
 
   // Computing control torque from cartesian pose error from integrated velocity command
+  Eigen::VectorXd     F_ee_des_;
+  F_ee_des_.resize(6);
   F_ee_des_ << -cartesian_stiffness_ * pose_error - cartesian_damping_ * velocity;
   tau_task << jacobian.transpose() * F_ee_des_;
 
+  ROS_WARN_STREAM_THROTTLE(0.5, "Desired Velocity Norm:" << velocity_d_.norm());
+  ROS_WARN_STREAM_THROTTLE(0.5, "Current Velocity Norm:" << velocity.head(3).norm());
   ROS_WARN_STREAM_THROTTLE(0.5, "Classic Linear Control Force:" << F_ee_des_.head(3).norm());
   ROS_WARN_STREAM_THROTTLE(0.5, "Classic Angular Control Force :" << F_ee_des_.tail(3).norm());
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
