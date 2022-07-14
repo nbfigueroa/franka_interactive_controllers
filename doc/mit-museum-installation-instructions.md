@@ -8,6 +8,7 @@
     ```
     roscd ds_motion_generator/
     git checkout -b mit-museum-demo
+    git pull . orgin/mit-museum-demo
     ```
     
 3. Create a directory and subdirectories for trajectory recordings in your home folder:
