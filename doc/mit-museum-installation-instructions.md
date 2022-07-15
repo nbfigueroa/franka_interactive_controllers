@@ -19,9 +19,9 @@
 
 4. If there are any changes in the setup wrt. to the configuration in MIT IRG 32 lab regarding relative positions of the stations wrt. the base of the robot the ``computeFrankaInspectionTransforms.m`` function within the [rosbag_to_mat](https://github.com/nbfigueroa/rosbag_to_mat) repo needs to be modified to define the relative reference frames:
 
-```matlab
-%% CODE TO MODIFY HERE
-```
+    ```matlab
+    %% CODE TO MODIFY HERE
+    ```
 
 
 5. Download the [auto-ds-learning](https://github.com/nbfigueroa/auto-ds-learning) code in your ``~./catkin_ws/src/``folder, this code runs in MATLAB and is used to automagically segment the trajectories for DS1: Reach-to-grasp Cubes, DS2: Inspection Task and Release, and learn the 2 DS models as lpv-DS. 
