@@ -1,4 +1,4 @@
-# Installation instructions for MIT Museum Inspection Demo
+# Installation & Setup for MIT Museum Inspection Demo
 
 1. Install and compile [franka_interactive_controllers](https://github.com/nbfigueroa/franka_interactive_controllers). 
 - Follow the instructions in the [README](https://github.com/nbfigueroa/franka_interactive_controllers#readme) file verbatim.  
