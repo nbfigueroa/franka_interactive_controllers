@@ -63,6 +63,25 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
+        panda_hand:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        panda_hand_sc:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        panda_hand_tcp:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        panda_leftfinger:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         panda_link0:
           Alpha: 1
           Show Axes: false
@@ -147,6 +166,11 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        panda_rightfinger:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
       Name: RobotModel
       Robot Description: robot_description
       TF Prefix: ""
@@ -164,6 +188,14 @@ Visualization Manager:
           Value: false
         panda_NE:
           Value: false
+        panda_hand:
+          Value: true
+        panda_hand_sc:
+          Value: true
+        panda_hand_tcp:
+          Value: true
+        panda_leftfinger:
+          Value: true
         panda_link0:
           Value: true
         panda_link0_sc:
@@ -198,6 +230,8 @@ Visualization Manager:
           Value: true
         panda_link8:
           Value: false
+        panda_rightfinger:
+          Value: true
       Marker Alpha: 1
       Marker Scale: 0.3499999940395355
       Name: TF
@@ -234,6 +268,15 @@ Visualization Manager:
                             panda_EE:
                               panda_K:
                                 {}
+                          panda_hand:
+                            panda_hand_sc:
+                              {}
+                            panda_hand_tcp:
+                              {}
+                            panda_leftfinger:
+                              {}
+                            panda_rightfinger:
+                              {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -408,4 +451,4 @@ Window Geometry:
     collapsed: false
   Width: 1156
   X: 55
-  Y: 49
+  Y: 0
