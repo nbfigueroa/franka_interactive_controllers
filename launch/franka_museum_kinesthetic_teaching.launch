@@ -1,0 +1,43 @@
+<?xml version="1.0" ?>
+<launch>
+  <arg name="robot_ip"                   default="172.16.0.2"/>
+  <arg name="load_gripper"               default="false" />
+  <arg name="use_gripper_gui"            default="false" />
+  <arg name="load_franka_control"        default="false" />
+  <arg name="load_kinesthetic_teaching"  default="true" />
+  <arg name="path_save_rosbag"           default="$(find franka_interactive_controllers)/../../../museum_recordings/bags/"/>
+  <arg name="topics_rosbag"       
+    default="/tf 
+    /franka_state_controller/joint_states 
+    /franka_state_controller/F_ext 
+    /franka_state_controller/O_T_EE 
+    /franka_state_controller/O_T_FL 
+    /franka_gripper/joint_states"/>
+  <arg name="use_recorder_gui" default="true" />
+
+  <!-- Bringup franka_interactive_bringup.launch and gravity compensation controller!-->
+  <group if="$(arg load_franka_control)">
+
+    <include file="$(find franka_interactive_controllers)/launch/franka_interactive_bringup.launch" >
+      <arg name="robot_ip" value="$(arg robot_ip)" />
+      <arg name="load_gripper" value="$(arg load_gripper)" />
+      <arg name="use_gripper_gui" value="$(arg use_gripper_gui)" />
+      <arg name="bringup_rviz" value="true" />
+    </include>
+
+    <!-- Load desired controller-->  
+    <rosparam command="load" file="$(find franka_interactive_controllers)/config/impedance_control_additional_params.yaml"/>
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_gravity_compensation_controller"/>
+
+  </group>
+
+
+  <!-- Load the easy kinesthetic teaching nodes-->
+  <group if="$(arg load_kinesthetic_teaching)">
+    <include file="$(find easy_kinesthetic_recording)/launch/franka_record_demonstrations.launch" >
+      <arg name="topics"            value="$(arg topics_rosbag)" />
+      <arg name="path_save"        value="$(arg path_save_rosbag)" />
+      <arg name="use_recorder_gui" value="$(arg use_recorder_gui)" />
+    </include>
+  </group>
+</launch>
