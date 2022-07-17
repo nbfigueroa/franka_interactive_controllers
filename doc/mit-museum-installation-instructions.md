@@ -76,5 +76,7 @@
      <p align="center">
       <img src="https://github.com/nbfigueroa/auto-ds-learning/blob/main/figs/output-learning-script.png" width="800x">
     </p>
+    
+    **NOTE-TODO**: For the final museum demo these two scripts can be put together and triggered with a GUI.
 
 **ONCE ALL OF THIS IS WORKING PROPERLY GO TO [MIT Museum Demo Instructions](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/mit-museum-demo-instructions.md) and follow the instructions there to run the demo.**
