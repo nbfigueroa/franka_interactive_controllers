@@ -1,0 +1,16 @@
+# Stuff to put in every ~/.bashrc	
+export ROS_MASTER_URI=http://172.16.0.1:11311
+export ROS_IP=172.16.0.1
+export FRANKA_IP=172.16.0.2
+
+
+# To run matlab within catkin_was for museum demo
+alias run_matlab_museum='roscd && cd ../src/auto-ds-learning && matlab'
+# To run catkin build from anywhere
+alias catkin_build='roscd && catkin build'
+# To run catkin make from anywhere
+alias catkin_m='roscd && cd ../src/ && catkin build'
+
+
+Github token for Museum Control PC:
+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
