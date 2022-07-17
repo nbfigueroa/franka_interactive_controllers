@@ -99,23 +99,27 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
   Vec                 F_linear_des_;     // desired linear force 
   Vec                 F_angular_des_;     // desired angular force
   Eigen::VectorXd     F_ee_des_;         // desired end-effector force
+  Vec                 orient_error;
   bool                bDebug;
   bool                bSmooth;
   double              smooth_val_;
   double              rot_stiffness;
   double              rot_damping;
-  boost::scoped_ptr<DSController>   passive_ds_controller;
+  float               max_tank_level_, dz_;
 
-  /// Dynamic reconfigure
-  boost::scoped_ptr<dynamic_reconfigure::Server<franka_interactive_controllers::passive_ds_paramConfig>>     
-  dynamic_server_passive_ds_param_;
+  // boost::scoped_ptr<DSController>   passive_ds_controller; // ignores passivity
+  boost::scoped_ptr<PassiveDSController>   passive_ds_controller; // ensures passivity
+
+  // Dynamic reconfigure
+  std::unique_ptr<dynamic_reconfigure::Server<franka_interactive_controllers::passive_ds_paramConfig>>
+      dynamic_server_passive_ds_param_;
   ros::NodeHandle dynamic_reconfigure_passive_ds_param_node_;
   void passiveDSParamCallback(franka_interactive_controllers::passive_ds_paramConfig& config,
                                uint32_t level);
 
   franka_interactive_controllers::passive_ds_paramConfig config_cfg;
 
-  // Desired twist subscriber
+  // Desired twist subscriber (To take in desired DS velocity)
   ros::Subscriber sub_desired_twist_;
   void desiredTwistCallback(const geometry_msgs::TwistConstPtr& msg);
 };
