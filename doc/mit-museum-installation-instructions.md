@@ -77,4 +77,4 @@
       <img src="https://github.com/nbfigueroa/auto-ds-learning/blob/main/figs/output-learning-script.png" width="800x">
     </p>
 
-ONCE ALL OF THIS IS WORKING PROPERLY GO TO [MIT Museum Demo Instructions](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/mit-museum-demo-instructions.md) and follow the instructions there to run the demo.
+**ONCE ALL OF THIS IS WORKING PROPERLY GO TO [MIT Museum Demo Instructions](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/mit-museum-demo-instructions.md) and follow the instructions there to run the demo.**
