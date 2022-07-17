@@ -1,36 +1,39 @@
-# MIT MUSEUM Interactive Inspection Task Demo Instructions
+# Instructions for MIT Museum Inspection Demo
 
-## On Old Lenovo Laptop (running the RT-Kernel Ubuntu 18)
+First follow [robot_startup](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/instructions/robot_startup.md) as per usual to startup the robot FCI control. Then you have **2 DEMO OPTIONS**:
 
-### 1. Before starting execution of the task send robot to home joint position (franka_control_interactive.launch should NOT BE running -- make sure robot is not near a collision before running this! You can move the robot manually first):
-```
-$ rosrun franka_interactive_controllers libfranka_joint_goal_motion_generator 1
-```
+ a. **Learning+Execution:** Learn new models from trajectories kinesthetically demonstrated by museum goer and execute those learned models with interactive perturbation capabilities (for this demo you need to run instructions for Phase 1 and 2 below)  
+ b. **Execution:** Run pre-learned optimal models and execute them with interactive perturbation capabilities (for this demo you only need to follow intrusctions Phase 2 below)
 
-### 2. Bringup the franka interactive control interface (in one terminal):
-```
-$ roslaunch franka_interactive_controllers franka_control_interactive.launch
-```
+### Phase 1. Learning New Motion Policy Models from Kinesthetic Demonstrations (~4min to complete)
 
-### 3. To execute a learned motion policy load cartesian impedance (twist) controller (in another terminal):
-```
-$ roslaunch franka_interactive_controllers cartesian_twist_impedance_controller.launch
-```
-
-### [extra demo]: To record demonstrations you can run the gravity compensation controller (in another terminal):
+1. To record demonstrations you can run the gravity compensation controller (in another terminal):
 ```
 $ roslaunch franka_interactive_controllers joint_gravity_compensation_controller.launch
 ```
 
-NOTE: Only one controller can run at the same time!
+### Phase 2. Running the Interactive Execution of Pre-Learned Models
 
-NOTE2: Every now and then you need to cleanup the log files!
-```bash
-$ cd /home/nbfigueroa/.ros/log
-$ rm -rf *
-```
+#### On Primary Control PC w/Real-TIME Kernel (interactive2)
+1. Before starting execution of the task send robot to home joint position (franka_control_interactive.launch should NOT BE running -- make sure robot is not near a collision before running this! You can move the robot manually first):
+   ```bash
+   rosrun franka_interactive_controllers libfranka_joint_goal_motion_generator_mit 1
+   ```
+2. Bringup the franka interactive control interface with museum configure rviz (in one terminal):
+   ```bash
+   roslaunch franka_interactive_controllers franka_museum_interactive_bringup.launch
+   ```
 
-## On New Lenovo Laptop (running the RT-Kernel Ubuntu 20)
+3. Load the passive_ds_controller that will receive velocities from the learned DS motion policies and convert them to control torques:
+   ```bash
+   roslaunch franka_interactive_controllers passive_ds_impedance_controller.launch
+   ```
+ **NOTE**: 2 and 3 can be merge to same launch file once pipeline is robust.
+
+
+#### The following can run on Primary (interactive2) or Secondary (interactive) Control PC 
+
+#### On Primary Control PC (interactive2)
 
 ### 1. Bringup visualization (in one terminal):
 ```
