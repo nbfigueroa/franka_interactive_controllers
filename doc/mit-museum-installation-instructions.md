@@ -38,7 +38,7 @@
      ```matlab
      >> setup_museum_code(0)    
      ```
-4. If there are any changes in the setup wrt. to the physical configuration in MIT IRG 32 lab regarding relative positions of the stations wrt. the base of the robot you should navigate to this folder: ``~/catkin_ws/src/rosbag_to_mat/tasks/industrial`` within the [rosbag_to_mat](https://github.com/nbfigueroa/rosbag_to_mat) repo and modify this function``computeFrankaInspectionTransforms.m`` function to the corrct relative reference frames wrt. robot base:
+5. If there are any changes in the setup wrt. to the physical configuration in MIT IRG 32 lab regarding relative positions of the stations wrt. the base of the robot you should navigate to this folder: ``~/catkin_ws/src/rosbag_to_mat/tasks/industrial`` within the [rosbag_to_mat](https://github.com/nbfigueroa/rosbag_to_mat) repo and modify this function``computeFrankaInspectionTransforms.m`` function to the corrct relative reference frames wrt. robot base:
 
     ```matlab
         function [H_pickup_station, H_inspection_tunnel, H_release_station] = computeFrankaInspectionTransforms(is_museum)
@@ -61,7 +61,20 @@
             end
         end
     ```
+    - The frames above represent the origins for each station as depicted here (center x,y and z is the bottom-most side):
+<p align="center">
+  <img src="https://github.com/nbfigueroa/auto-ds-learning/blob/main/figs/museum_robot_setup.png" width="356x"><img src="https://github.com/nbfigueroa/auto-ds-learning/blob/main/figs/IMG_5165.jpg" width="302x">
+</p>
 
+6. If there pre-recorded bags in the ``~/museum_recordings/bags`` directory, you can test the segmentation and learning scripts.
+    - 6a. If you run the ``franka_museum_inspection_segment_trajectories.m`` script after **<10s** you should see the following figures pop-up. This script will create ``.mat`` files that will have the segmented, clustered and processed trajectories to learn 2 DS (DS1: Reach-to-pick cubes from picking station, DS2: Inspection DS), these segmentation is based on the locations of the transforms defined in the previous step, if something is drastically change then this won't work properly:
+     <p align="center">
+      <img src="https://github.com/nbfigueroa/auto-ds-learning/blob/main/figs/output-segmentation-script.png" width="800x">
+    </p>
+    
+    - 6b. Then run ``franka_museum_inspection_learn_sequenceDS.m`` script after **<2min** (around 1min per DS if the data is optimal) you should see the following figures pop-up. This script will create ``.yml`` files that will have the learned parametrs fo DS1_left (The reach-to-pick DS for the left picking location), DS1_right (The same reach-to-pick DS but for the right picking location) and DS2 (The inspection DS with a single target at the release station) which will then be accessed by the [ds_motion_generator]() to control the robot:
+     <p align="center">
+      <img src="https://github.com/nbfigueroa/auto-ds-learning/blob/main/figs/output-learning-script.png" width="800x">
+    </p>
 
-5. Download the [auto-ds-learning](https://github.com/nbfigueroa/auto-ds-learning) code in your ``~./catkin_ws/src/``folder, this code runs in MATLAB and is used to automagically segment the trajectories for DS1: Reach-to-grasp Cubes, DS2: Inspection Task and Release, and learn the 2 DS models as lpv-DS. 
-- Once downloaded in the MATLAB Command Window run `` setup_code.m``
+ONCE ALL OF THIS IS WORKING PROPERLY GO TO [MIT Museum Demo Instructions](https://github.com/nbfigueroa/franka_interactive_controllers/blob/main/doc/mit-museum-demo-instructions.md) and follow the instructions there to run the demo.
