@@ -63,7 +63,7 @@
     ```
     - The frames above represent the origins for each station as depicted here (center x,y and z is the bottom-most side):
 <p align="center">
-  <img src="https://github.com/nbfigueroa/auto-ds-learning/blob/main/figs/museum_robot_setup.png" width="356x"><img src="https://github.com/nbfigueroa/auto-ds-learning/blob/main/figs/IMG_5165.jpg" width="302x">
+  <img src="https://github.com/nbfigueroa/auto-ds-learning/blob/main/figs/museum_robot_setup.png" width="461x"><img src="https://github.com/nbfigueroa/auto-ds-learning/blob/main/figs/IMG_5165.jpg" width="402x">
 </p>
 
 6. If there pre-recorded bags in the ``~/museum_recordings/bags`` directory, you can test the segmentation and learning scripts.
