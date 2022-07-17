@@ -11,6 +11,17 @@ alias catkin_build='roscd && catkin build'
 # To run catkin make from anywhere
 alias catkin_m='roscd && cd ../src/ && catkin build'
 
+# Useful alias
+alias roscd_src='roscd && cd ../src'
+alias catkin_m='roscd && cd ../  && catkin_make'
+alias open_bash='nano ~/.bashrc'
+alias source_bash='source ~/.bashrc'
+
+
+To sun gazebo/rviz sim:
+roslaunch franka_interactive_controllers simulate_panda_gazebo.launch
+roslaunch ds_motion_generator franka_museum_inspection_lpvDS_motionGenerator.launch which_DS:=latest
+
 
 Github token for Museum Control PC:
 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
