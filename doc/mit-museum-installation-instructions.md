@@ -61,7 +61,7 @@
             end
         end
     ```
-    - The frames above represent the origins for each station as depicted here (center x,y and z is the bottom-most side):
+    - The frames above represent the origins for each station as depicted here (center x,y and z is the bottom-most side), the coordinates of these station origins are wrt. robot base which is the global origin [0,0,0]:
 <p align="center">
   <img src="https://github.com/nbfigueroa/auto-ds-learning/blob/main/figs/museum_robot_setup.png" width="461x"><img src="https://github.com/nbfigueroa/auto-ds-learning/blob/main/figs/IMG_5165.jpg" width="402x">
 </p>
