@@ -23,7 +23,7 @@ Alternative [extra demo]: If you want to record demos then you can run the follo
 $ roslaunch franka_interactive_controllers franka_kinesthetic_teaching.launch
 ```
 
-
+---
 
 ### Phase 2. Running the Interactive Execution of Pre-Learned Models
 
