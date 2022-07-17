@@ -18,7 +18,7 @@
     git pull . orgin/mit-museum-demo
     ``` -->
     
-2. If not done so already, create a directory and subdirectories for trajectory recordings in your home folder or at the same level as your ``~/catkin_ws``, following commands assuming workspace is in home dir:
+2. If not done so already, create a directory and subdirectories for trajectory recordings in your home folder or at the same level as your ``~/catkin_ws``, the following commands assume the catkin workspace is in home dir:
     ```bash
     cd && mkdir museum_recordings
     cd museum_recordings && mkdir bags && mkdir mat
