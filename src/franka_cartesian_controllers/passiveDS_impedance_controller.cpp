@@ -201,11 +201,18 @@ void PassiveDSImpedanceController::starting(const ros::Time& /*time*/) {
   position_d_target_    = initial_transform.translation();
   orientation_d_target_ = Eigen::Quaterniond(initial_transform.linear());
 
-  if (!q_d_nullspace_initialized_) {
-    q_d_nullspace_ = q_initial;
-    q_d_nullspace_initialized_ = true;
-    ROS_INFO_STREAM("Desired nullspace position (from q_initial): " << std::endl << q_d_nullspace_);
-  }
+  // if (!q_d_nullspace_initialized_) {
+  //   q_d_nullspace_ = q_initial;
+  //   q_d_nullspace_initialized_ = true;
+  //   q_d_nullspace_ << -0.13169961199844094, -0.2061586460920802, 0.03348877041015708, -2.1582989016750402, -0.005362026724136538, 2.053694872394686, 0.8156176816517178;
+    
+  //   q_d_nullspace_ << -0.10576196822576356, -0.3352823379667182, 0.07229093052145613, -1.9880429509648103, 0.0011565770285411011, 1.7324491872743322, 0.841189909406834;
+  //   ROS_INFO_STREAM("Desired nullspace position (from q_initial): " << std::endl << q_d_nullspace_);
+  // }
+
+  q_d_nullspace_initialized_ = true;
+  q_d_nullspace_ << -0.10576196822576356, -0.3352823379667182, 0.07229093052145613, -1.9880429509648103, 0.0011565770285411011, 1.7324491872743322, 0.841189909406834;
+  ROS_INFO_STREAM("Desired nullspace position (from q_initial): " << std::endl << q_d_nullspace_);
 
   // To compute 0 velocities if no command has been given
   elapsed_time    = ros::Duration(0.0);

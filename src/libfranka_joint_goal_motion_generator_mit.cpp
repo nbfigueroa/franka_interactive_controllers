@@ -64,7 +64,8 @@ int main(int argc, char** argv) {
     switch(goal_id) {
        case 1  :
           std::cout << "Selected q_home as goal" << std::endl;
-          q_goal = {{-0.13169961199844094, -0.2061586460920802, 0.03348877041015708, -2.1582989016750402, -0.005362026724136538, 2.053694872394686, 0.8156176816517178}}; 
+          // q_goal = {{-0.13169961199844094, -0.2061586460920802, 0.03348877041015708, -2.1582989016750402, -0.005362026724136538, 2.053694872394686, 0.8156176816517178}}; 
+          q_goal = {{-0.10576196822576356, -0.3352823379667182, 0.07229093052145613, -1.9880429509648103, 0.0011565770285411011, 1.7324491872743322, 0.841189909406834}};
           break;
 
        case 2  :
@@ -84,7 +85,7 @@ int main(int argc, char** argv) {
 
     }
   
-    MotionGenerator motion_generator(1.0, q_goal);
+    MotionGenerator motion_generator(0.6, q_goal);
     std::cout << "WARNING: This example will move the robot! "
               << "Please make sure to have the user stop button at hand!" << std::endl
               << "Press Enter to continue..." << std::endl;
