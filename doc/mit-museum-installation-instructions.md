@@ -61,9 +61,14 @@
             end
         end
     ```
-    - The frames above represent the origins for each station as depicted here (center x,y and z is the bottom-most side):
+    - The frames above represent the origins for each station as depicted here (center x,y and z is the bottom-most side), the coordinates of these station origins are wrt. robot base which is the global origin [0,0,0]:
 <p align="center">
   <img src="https://github.com/nbfigueroa/auto-ds-learning/blob/main/figs/museum_robot_setup.png" width="461x"><img src="https://github.com/nbfigueroa/auto-ds-learning/blob/main/figs/IMG_5165.jpg" width="402x">
+</p>
+
+   **NOTE-TODO**: The white table-top that you see here is not necessary. I only place it to extend the workspace but it can be removed. The only constraint is that the 3 stations should be **~0.55m from the base of the robot in the x-direction** with the release station around **~0.45m from the base of the robot in the y-direction**.
+<p align="center">
+  <img src="https://github.com/nbfigueroa/auto-ds-learning/blob/main/figs/IMG_5166.jpg" width="350x"><img src="https://github.com/nbfigueroa/auto-ds-learning/blob/main/figs/IMG_5167.jpg" width="350x">
 </p>
 
 6. If there pre-recorded bags in the ``~/museum_recordings/bags`` directory, you can test the segmentation and learning scripts.
