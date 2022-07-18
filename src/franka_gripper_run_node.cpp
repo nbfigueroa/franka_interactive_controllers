@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
 
       // Creating goal for moving action
       move_goal.width = 0.08;
-      move_goal.speed = 0.1;
+      move_goal.speed = 0.5;
       ac_move.sendGoal(move_goal);
 
       //wait for the action to return
@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
       
       // Creating goal for grasping action with 50N force
       grasp_goal.width = 0.0;
-      grasp_goal.speed = 0.1;
+      grasp_goal.speed = 0.5;
       grasp_goal.force = 50;
       grasp_goal.epsilon.inner = 0.2;
       grasp_goal.epsilon.outer = 0.2;
