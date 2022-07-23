@@ -57,6 +57,7 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
   Eigen::Matrix<double, 6, 6> cartesian_damping_;
   Eigen::Matrix<double, 6, 6> cartesian_damping_target_;
   Eigen::Matrix<double, 7, 1> q_d_nullspace_;
+  Eigen::Matrix<double, 6, 1> F_ext_hat_;
   // whether to load from yaml or use initial robot config
   bool q_d_nullspace_initialized_ = false;
   
@@ -84,13 +85,6 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
   Eigen::Matrix<double, 7, 7> d_ff_joint_gains_;
   Eigen::Matrix<double, 6, 1> tool_compensation_force_;
   bool activate_tool_compensation_;
-  
-  // Dynamic reconfigure
-  // std::unique_ptr<dynamic_reconfigure::Server<franka_interactive_controllers::compliance_paramConfig>>
-  //     dynamic_server_compliance_param_;
-  // ros::NodeHandle dynamic_reconfigure_compliance_param_node_;
-  // void complianceParamCallback(franka_interactive_controllers::compliance_paramConfig& config,
-  //                              uint32_t level);
 
 
   // Initialize DS controller
@@ -106,6 +100,11 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
   double              rot_stiffness;
   double              rot_damping;
   float               max_tank_level_, dz_;
+  realtype            damping_eigval0_;
+  realtype            damping_eigval1_;
+  realtype            damping_eigval0_filt_;
+  realtype            damping_eigval1_filt_;
+  bool                damped_reduced_;
 
   // boost::scoped_ptr<DSController>   passive_ds_controller; // ignores passivity
   boost::scoped_ptr<PassiveDSController>   passive_ds_controller; // ensures passivity

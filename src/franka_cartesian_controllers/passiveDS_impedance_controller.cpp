@@ -157,8 +157,8 @@ bool PassiveDSImpedanceController::init(hardware_interface::RobotHW* robot_hw,
   F_linear_des_.resize(3);
   F_angular_des_.resize(3);
   F_ee_des_.resize(6);
+  damped_reduced_ = false;
 
-  // Setting with default paramsss
   rot_stiffness = config_cfg.rot_stiffness;
   rot_damping   = config_cfg.rot_damping;
   bDebug      = config_cfg.debug;
@@ -167,7 +167,6 @@ bool PassiveDSImpedanceController::init(hardware_interface::RobotHW* robot_hw,
   cartesian_stiffness_.setIdentity();
   cartesian_stiffness_.topLeftCorner(3, 3) << 5.0 * Eigen::Matrix3d::Identity();
   cartesian_stiffness_.bottomRightCorner(3, 3) << 5.0 * Eigen::Matrix3d::Identity();
-
 
   // Initializing variables
   position_d_.setZero();
@@ -179,6 +178,7 @@ bool PassiveDSImpedanceController::init(hardware_interface::RobotHW* robot_hw,
 
   cartesian_stiffness_.setZero();
   cartesian_damping_.setZero();
+  F_ext_hat_.setZero();
 
   return true;
 }
@@ -236,11 +236,14 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   Eigen::Map<Eigen::Matrix<double, 6, 7>> jacobian(jacobian_array.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1>> q(robot_state.q.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1>> dq(robot_state.dq.data());
+  Eigen::Map<Eigen::Matrix<double, 6, 1>> F_ext_hat(robot_state.O_F_ext_hat_K.data());
+  F_ext_hat_ << F_ext_hat; // This should be done in a more memory-efficient way
   Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J_d(  // NOLINT (readability-identifier-naming)
       robot_state.tau_J_d.data());
   Eigen::Affine3d transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
   Eigen::Vector3d position(transform.translation());
   Eigen::Quaterniond orientation(transform.linear());
+
 
   // Current and Desired EE velocity
   Eigen::Matrix<double, 6, 1> velocity;
@@ -292,7 +295,23 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
 
   // ----------------- Linear Velocity Error -> Force -----------------------//
   F_ee_des_.setZero();
-  passive_ds_controller->Update(dx_linear_msr_,dx_linear_des_); // update ignoring the passivity 
+  // realtype low_damping (50);
+  // realtype filt_param (0.6888);
+  if (F_ext_hat_.head(3).norm() > 20){
+    damping_eigval0_filt_ = filters::exponentialSmoothing(75, damping_eigval0_filt_, 0.5);
+    damping_eigval1_filt_ = filters::exponentialSmoothing(75, damping_eigval1_filt_, 0.5);
+    // damping_eigval0_filt_ = (1-filt_param)*low_damping + filt_param*damping_eigval0_filt_;
+    // damping_eigval1_filt_ = (1-filt_param)*low_damping + filt_param*damping_eigval1_filt_;
+  }
+  else{
+    damping_eigval0_filt_ = damping_eigval0_;
+    damping_eigval1_filt_ = damping_eigval1_;
+    // damping_eigval0_filt_ = (1-filt_param)*damping_eigval0_ + filt_param*damping_eigval0_filt_;
+    // damping_eigval1_filt_ = (1-filt_param)*damping_eigval1_ + filt_param*damping_eigval1_filt_;
+  }
+ 
+  passive_ds_controller->set_damping_eigval(damping_eigval0_filt_,damping_eigval1_filt_);
+  passive_ds_controller->Update(dx_linear_msr_,dx_linear_des_); // update ignoring the passivity    
 
   // update ensuring passivity
   // passive_ds_controller->UpdatePassive(dx_linear_msr_, dx_linear_des_, dt_);
@@ -301,17 +320,17 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   // i.e., when we switch the DS or when the human is doing a prolonged pertubation)
   // passive_ds_controller->reset_storage();
 
+
   F_linear_des_ = passive_ds_controller->control_output(); // (3 x 1)
   F_ee_des_.head(3) = F_linear_des_;
 
   // ----------------- Debug -----------------------//
+  ROS_WARN_STREAM_THROTTLE(0.5, "Estimated F_ext linear Norm:" << F_ext_hat_.head(3).norm());
+  ROS_WARN_STREAM_THROTTLE(0.5, "Damping Eigenvalues:" << damping_eigval0_filt_ << " " << damping_eigval1_filt_);
   ROS_WARN_STREAM_THROTTLE(0.5, "Desired Velocity:" << dx_linear_des_(0) << " " << dx_linear_des_(1) <<  " " << dx_linear_des_(2));
   ROS_WARN_STREAM_THROTTLE(0.5, "Desired Velocity Norm:" << dx_linear_des_.norm());
   ROS_WARN_STREAM_THROTTLE(0.5, "Current Velocity Norm:" << dx_linear_msr_.norm());
-  // Vec dx_error_;
-  // dx_error_.resize(3);
-  // dx_error_ = dx_linear_msr_ - dx_linear_des_;
-  // ROS_WARN_STREAM_THROTTLE(0.5, "Current Velocity Error:" << dx_error_.norm());
+
   ROS_WARN_STREAM_THROTTLE(0.5, "Linear Control Forces :" << F_ee_des_(0) << " " << F_ee_des_(1) << " " << F_ee_des_(2));    
 
 
@@ -445,7 +464,15 @@ void PassiveDSImpedanceController::passiveDSParamCallback(
     uint32_t /*level*/) {
 
   // Passive DS params 
-  passive_ds_controller->set_damping_eigval(config.damping_eigval0,config.damping_eigval1);
+  // passive_ds_controller->set_damping_eigval(config.damping_eigval0,config.damping_eigval1);
+
+    // Setting with default paramsss
+  damping_eigval0_ = config.damping_eigval0;
+  damping_eigval1_ = config.damping_eigval1;
+
+  damping_eigval0_filt_ = damping_eigval0_;
+  damping_eigval1_filt_ = damping_eigval1_;
+
   rot_stiffness = config.rot_stiffness;
   rot_damping   = config.rot_damping;
   bDebug        = config.debug;
