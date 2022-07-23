@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
 
     }
   
-    MotionGenerator motion_generator(0.6, q_goal);
+    MotionGenerator motion_generator(0.5, q_goal);
     std::cout << "WARNING: This example will move the robot! "
               << "Please make sure to have the user stop button at hand!" << std::endl
               << "Press Enter to continue..." << std::endl;

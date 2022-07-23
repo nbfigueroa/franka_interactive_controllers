@@ -269,11 +269,6 @@ void CartesianPoseImpedanceController::update(const ros::Time& /*time*/,
   // compute error to desired pose
   // position error
   Eigen::Matrix<double, 6, 1> error;
-
-  // For debugging
-  // ROS_INFO_STREAM("Current ee position: " << position);
-  // ROS_INFO_STREAM("Desired ee position from DS: " << position_d_target_);
-  // ROS_INFO_STREAM("Desired ee position from DS: " << position_d_);
   error.head(3) << position - position_d_;
 
   // orientation error

@@ -1,4 +1,4 @@
-external_tool_compensation: [0, 0, 0, 0, 0, 0] # no tool
+external_tool_compensation: [0, 0, 0.00, 0, 0.0, 0.0] # no tool on MIT 32 table
 # external_tool_compensation: [0, 0, -3, 0, 0, 0] #Lishuai gripper prototypes
 # external_tool_compensation: [0.46, -0.17, -1.64, 0, 0, 0] #
 
@@ -23,6 +23,6 @@ external_tool_compensation: [0, 0, 0, 0, 0, 0] # no tool
 # RSS: replay:
 # cartesian_stiffness_target: [600, 600, 500, 50, 50, 50]
 cartesian_stiffness_target: [300, 300, 300, 50, 50, 50]
-
 # cartesian_stiffness_target: [1000, 200, 200, 50, 50, 50]
+
 nullspace_stiffness: 0.01

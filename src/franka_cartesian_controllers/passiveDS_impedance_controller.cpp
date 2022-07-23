@@ -161,7 +161,6 @@ bool PassiveDSImpedanceController::init(hardware_interface::RobotHW* robot_hw,
 
   rot_stiffness = config_cfg.rot_stiffness;
   rot_damping   = config_cfg.rot_damping;
-  bDebug      = config_cfg.debug;
   bSmooth     = config_cfg.bSmooth;
   smooth_val_ = config_cfg.smooth_val;
   cartesian_stiffness_.setIdentity();
@@ -201,16 +200,8 @@ void PassiveDSImpedanceController::starting(const ros::Time& /*time*/) {
   position_d_target_    = initial_transform.translation();
   orientation_d_target_ = Eigen::Quaterniond(initial_transform.linear());
 
-  // if (!q_d_nullspace_initialized_) {
-  //   q_d_nullspace_ = q_initial;
-  //   q_d_nullspace_initialized_ = true;
-  //   q_d_nullspace_ << -0.13169961199844094, -0.2061586460920802, 0.03348877041015708, -2.1582989016750402, -0.005362026724136538, 2.053694872394686, 0.8156176816517178;
-    
-  //   q_d_nullspace_ << -0.10576196822576356, -0.3352823379667182, 0.07229093052145613, -1.9880429509648103, 0.0011565770285411011, 1.7324491872743322, 0.841189909406834;
-  //   ROS_INFO_STREAM("Desired nullspace position (from q_initial): " << std::endl << q_d_nullspace_);
-  // }
-
   q_d_nullspace_initialized_ = true;
+  // This should be read from yaml file!!
   q_d_nullspace_ << -0.10576196822576356, -0.3352823379667182, 0.07229093052145613, -1.9880429509648103, 0.0011565770285411011, 1.7324491872743322, 0.841189909406834;
   ROS_INFO_STREAM("Desired nullspace position (from q_initial): " << std::endl << q_d_nullspace_);
 
@@ -279,14 +270,14 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   dx_linear_des_(2)   = velocity_d_(2);
 
 
-  /// set measured linear and angular velocity
-  if(bSmooth)
-  {
-      dx_linear_msr_(0)   = velocity(0);
-      dx_linear_msr_(1)   = velocity(1);
-      dx_linear_msr_(2)   = velocity(2);
+  /// set measured linear velocity
+  dx_linear_msr_(0)   = velocity(0);
+  dx_linear_msr_(1)   = velocity(1);
+  dx_linear_msr_(2)   = velocity(2);
 
-  }else{
+  /// Smooth measured velocity when desired velocity is 0
+  if(bSmooth && dx_linear_des_.norm() < 0.01){
+      ROS_WARN_STREAM_THROTTLE(0.5, "Smoothing velocity to avoid additive vibrations!");
       dx_linear_msr_(0)    = filters::exponentialSmoothing(velocity(0), dx_linear_msr_(0),smooth_val_);
       dx_linear_msr_(1)    = filters::exponentialSmoothing(velocity(1), dx_linear_msr_(1),smooth_val_);
       dx_linear_msr_(2)    = filters::exponentialSmoothing(velocity(2), dx_linear_msr_(2),smooth_val_);
@@ -295,30 +286,13 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
 
   // ----------------- Linear Velocity Error -> Force -----------------------//
   F_ee_des_.setZero();
-  // realtype low_damping (50);
-  // realtype filt_param (0.6888);
-  if (F_ext_hat_.head(3).norm() > 20){
-    damping_eigval0_filt_ = filters::exponentialSmoothing(75, damping_eigval0_filt_, 0.5);
-    damping_eigval1_filt_ = filters::exponentialSmoothing(75, damping_eigval1_filt_, 0.5);
-    // damping_eigval0_filt_ = (1-filt_param)*low_damping + filt_param*damping_eigval0_filt_;
-    // damping_eigval1_filt_ = (1-filt_param)*low_damping + filt_param*damping_eigval1_filt_;
-  }
-  else{
-    damping_eigval0_filt_ = damping_eigval0_;
-    damping_eigval1_filt_ = damping_eigval1_;
-    // damping_eigval0_filt_ = (1-filt_param)*damping_eigval0_ + filt_param*damping_eigval0_filt_;
-    // damping_eigval1_filt_ = (1-filt_param)*damping_eigval1_ + filt_param*damping_eigval1_filt_;
-  }
- 
-  passive_ds_controller->set_damping_eigval(damping_eigval0_filt_,damping_eigval1_filt_);
-  passive_ds_controller->Update(dx_linear_msr_,dx_linear_des_); // update ignoring the passivity    
-
-  // update ensuring passivity
-  // passive_ds_controller->UpdatePassive(dx_linear_msr_, dx_linear_des_, dt_);
+  // passive_ds_controller->set_damping_eigval(damping_eigval0_filt_,damping_eigval1_filt_);
+  passive_ds_controller->Update(dx_linear_msr_,dx_linear_des_);
 
   // reset tank storage if needed (this could be included in a callback; 
   // i.e., when we switch the DS or when the human is doing a prolonged pertubation)
-  // passive_ds_controller->reset_storage();
+  // if (dx_linear_des_.norm() == 0)
+  //   passive_ds_controller->reset_storage();
 
 
   F_linear_des_ = passive_ds_controller->control_output(); // (3 x 1)
@@ -330,7 +304,6 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   ROS_WARN_STREAM_THROTTLE(0.5, "Desired Velocity:" << dx_linear_des_(0) << " " << dx_linear_des_(1) <<  " " << dx_linear_des_(2));
   ROS_WARN_STREAM_THROTTLE(0.5, "Desired Velocity Norm:" << dx_linear_des_.norm());
   ROS_WARN_STREAM_THROTTLE(0.5, "Current Velocity Norm:" << dx_linear_msr_.norm());
-
   ROS_WARN_STREAM_THROTTLE(0.5, "Linear Control Forces :" << F_ee_des_(0) << " " << F_ee_des_(1) << " " << F_ee_des_(2));    
 
 
@@ -463,19 +436,16 @@ void PassiveDSImpedanceController::passiveDSParamCallback(
     franka_interactive_controllers::passive_ds_paramConfig& config,
     uint32_t /*level*/) {
 
-  // Passive DS params 
-  // passive_ds_controller->set_damping_eigval(config.damping_eigval0,config.damping_eigval1);
-
     // Setting with default paramsss
   damping_eigval0_ = config.damping_eigval0;
   damping_eigval1_ = config.damping_eigval1;
 
   damping_eigval0_filt_ = damping_eigval0_;
   damping_eigval1_filt_ = damping_eigval1_;
+  passive_ds_controller->set_damping_eigval(damping_eigval0_filt_,damping_eigval1_filt_);
 
   rot_stiffness = config.rot_stiffness;
   rot_damping   = config.rot_damping;
-  bDebug        = config.debug;
   bSmooth       = config.bSmooth;
   smooth_val_   = config.smooth_val;
   config_cfg    = config;
@@ -483,16 +453,16 @@ void PassiveDSImpedanceController::passiveDSParamCallback(
 
   // Standard impedance params
   cartesian_stiffness_target_.setIdentity();
-  cartesian_stiffness_target_.topLeftCorner(3, 3)
-      << config.translational_stiffness * Eigen::Matrix3d::Identity();
+  // cartesian_stiffness_target_.topLeftCorner(3, 3)
+  //     << config.translational_stiffness * Eigen::Matrix3d::Identity();
   cartesian_stiffness_target_.bottomRightCorner(3, 3)
       << config.rotational_stiffness * Eigen::Matrix3d::Identity();
   
 
   cartesian_damping_target_.setIdentity();
   // Damping ratio = 1
-  cartesian_damping_target_.topLeftCorner(3, 3)
-      << 2.0 * sqrt(config.translational_stiffness) * Eigen::Matrix3d::Identity();
+  // cartesian_damping_target_.topLeftCorner(3, 3)
+  //     << 2.0 * sqrt(config.translational_stiffness) * Eigen::Matrix3d::Identity();
   cartesian_damping_target_.bottomRightCorner(3, 3)
       << 2.0 * sqrt(config.rotational_stiffness) * Eigen::Matrix3d::Identity();
   
@@ -513,19 +483,6 @@ void PassiveDSImpedanceController::desiredTwistCallback(
   velocity_d_      << msg->linear.x, msg->linear.y, msg->linear.z;
   last_cmd_time    = ros::Time::now().toSec();
 
-  // ROS_INFO_STREAM("[CALLBACK] Desired velocity from DS: " << velocity_d_);
-  // ROS_INFO_STREAM("[CALLBACK] Desired ee position from DS: " << position_d_target_);
-
-
-  // position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
-  
-  // Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
-  // orientation_d_target_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y,
-  //     msg->pose.orientation.z, msg->pose.orientation.w;
-  
-  // if (last_orientation_d_target.coeffs().dot(orientation_d_target_.coeffs()) < 0.0) {
-  //   orientation_d_target_.coeffs() << -orientation_d_target_.coeffs();
-  // }
 }
 
 }  // namespace franka_interactive_controllers
