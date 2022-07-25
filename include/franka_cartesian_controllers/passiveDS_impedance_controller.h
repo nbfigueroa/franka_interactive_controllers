@@ -51,6 +51,7 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
   double filter_params_{0.005};
   double nullspace_stiffness_{20.0};
   double nullspace_stiffness_target_{20.0};
+
   const double delta_tau_max_{1.0};
   Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
   Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_;
@@ -86,6 +87,8 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
   Eigen::Matrix<double, 6, 1> tool_compensation_force_;
   bool activate_tool_compensation_;
 
+  // For external torque and gravity compensation
+  Eigen::Matrix<double, 7, 1> tau_ext_initial_;
 
   // Initialize DS controller
   Vec                 dx_linear_des_;
@@ -106,8 +109,9 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
   realtype            damping_eigval1_filt_;
   bool                damped_reduced_;
 
-  // boost::scoped_ptr<DSController>   passive_ds_controller; // ignores passivity
-  boost::scoped_ptr<PassiveDSController>   passive_ds_controller; // ensures passivity
+
+  // Instantiate DS controller class
+  boost::scoped_ptr<DSController>   passive_ds_controller; // ignores passivity
 
   // Dynamic reconfigure
   std::unique_ptr<dynamic_reconfigure::Server<franka_interactive_controllers::passive_ds_paramConfig>>
