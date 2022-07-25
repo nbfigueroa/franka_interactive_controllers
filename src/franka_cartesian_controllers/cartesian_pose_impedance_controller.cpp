@@ -297,6 +297,8 @@ void CartesianPoseImpedanceController::update(const ros::Time& /*time*/,
                        (nullspace_stiffness_ * (q_d_nullspace_ - q) -
                         (2.0 * sqrt(nullspace_stiffness_)) * dq);
 
+  ROS_WARN_STREAM_THROTTLE(0.5, "Nullspace torques:" << tau_nullspace.transpose());    
+
   // Compute tool compensation (scoop/camera in scooping task)
   if (activate_tool_compensation_)
     tau_tool << jacobian.transpose() * tool_compensation_force_;

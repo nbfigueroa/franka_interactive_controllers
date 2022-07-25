@@ -369,10 +369,12 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   tau_nullspace.setZero();
   Eigen::VectorXd nullspace_stiffness_vec(7);
   // nullgains << 1.,60,10.,40,5.,1.,1.; // These are optimal values for KUKA IIWA
-  double nominal_stiffness = 1.0; // This could be read from yaml file
+  double nominal_stiffness = 10.0; // This could be read from yaml file
   nullspace_stiffness_vec <<  0.05*nominal_stiffness, 0.5*nominal_stiffness, 5*nominal_stiffness, 0.15*nominal_stiffness, 0.5*nominal_stiffness, 0.01*nominal_stiffness, 0.01*nominal_stiffness;
-  Eigen::DiagonalMatrix<double, 7> nullspace_stiffness_matrix = nullspace_stiffness_vec.asDiagonal();
-  tau_nullspace_error << nullspace_stiffness_matrix * (q_d_nullspace_ - q);
+  for (int i=0; i<7; i++)
+    tau_nullspace_error(i) << nullspace_stiffness_vec(i) * (q_d_nullspace_(i) - q(i));
+
+
   tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
                     jacobian.transpose() * jacobian_transpose_pinv) *
                        (tau_nullspace_error - (2.0 * sqrt(nominal_stiffness)) * dq);
@@ -385,7 +387,9 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
     tau_tool.setZero();
 
   // FINAL DESIRED CONTROL TORQUE SENT TO ROBOT
-  tau_d << tau_task_passive + tau_nullspace + coriolis - tau_tool + tau_ext_initial_;
+  // tau_d << tau_task_passive + tau_nullspace + coriolis - tau_tool + tau_ext_initial_;
+
+  tau_d << tau_task_passive + coriolis - tau_tool; // For sim
 
   // Saturate torque rate to avoid discontinuities
   tau_d << saturateTorqueRate(tau_d, tau_J_d);

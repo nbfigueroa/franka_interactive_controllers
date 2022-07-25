@@ -11,25 +11,14 @@
   <!-- Robot Customization -->
   <arg name="arm_id"      default="panda" doc="Name of the panda robot to spawn" />
   <arg name="use_gripper" default="true"  doc="Should a franka hand be mounted on the flange?" />
-  <arg name="controller"  default="cartesian_impedance_example_controller"     doc="Which example controller should be started? (One of {cartesian_impedance,model,force,joint_position,joint_velocity}_example_controller)" />
+  <arg name="controller"  default=" "     doc="Which example controller should be started? (One of {cartesian_impedance,model,force,joint_position,joint_velocity}_example_controller)" />
   <arg name="x"           default="0"     doc="How far forward to place the base of the robot in [m]?" />
   <arg name="y"           default="0"     doc="How far leftwards to place the base of the robot in [m]?" />
   <arg name="z"           default="0"     doc="How far upwards to place the base of the robot in [m]?" />
   <arg name="roll"        default="0"     doc="How much to rotate the base of the robot around its X-axis in [rad]?" />
   <arg name="pitch"       default="0"     doc="How much to rotate the base of the robot around its Y-axis in [rad]?" />
   <arg name="yaw"         default="0"     doc="How much to rotate the base of the robot around its Z-axis in [rad]?" />
-  <arg name="initial_joint_positions"
-       doc="Initial joint configuration of the panda. Specify as a list of name/value pairs in form of '-J [name-of-joint] [value-in-rad]'. Default is a 90 degree bend in the elbow"
-       default="-J $(arg arm_id)_joint1 0
-                -J $(arg arm_id)_joint2 -0.785398163
-                -J $(arg arm_id)_joint3 0
-                -J $(arg arm_id)_joint4 -2.35619449
-                -J $(arg arm_id)_joint5 0
-                -J $(arg arm_id)_joint6 1.57079632679
-                -J $(arg arm_id)_joint7 0.785398163397
-                -J $(arg arm_id)_finger_joint1 0.001
-                -J $(arg arm_id)_finger_joint2 0.001"
-       />
+  <!-- <arg name="initial_joint_positions"     default="-J $(arg arm_id)_joint1 0 -J $(arg arm_id)_joint2 -0.1516284550464292 -J $(arg arm_id)_joint3 0 -J $(arg arm_id)_joint4 -2.1602991589328693 -J $(arg arm_id)_joint5 0 -J $(arg arm_id)_joint6 2.030401506252017 -J $(arg arm_id)_joint7 0.8428664707532099 -J $(arg arm_id)_finger_joint1 0.001 -J $(arg arm_id)_finger_joint2 0.001"/> -->
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch" if="$(arg gazebo)">
     <arg name="world_name" value="$(arg world)"/>
@@ -49,7 +38,7 @@
   </param>
 
   <rosparam file="$(find franka_gazebo)/config/franka_hw_sim.yaml" subst_value="true" />
-  <rosparam file="$(find franka_gazebo)/config/sim_controllers.yaml" subst_value="true" />
+  <rosparam file="$(find franka_interactive_controllers)/config/franka_interactive_sim_controllers.yaml" subst_value="true" />
 
   <param name="m_ee" value="0.76" if="$(arg use_gripper)" />
 
@@ -85,17 +74,23 @@
   </node>
 
   <!-- Start only if cartesian_impedance_example_controller -->
-  <node name="interactive_marker"
+<!--   <node name="interactive_marker"
         pkg="franka_example_controllers"
         type="interactive_marker.py"
         if="$(eval arg('controller') == 'cartesian_impedance_example_controller')">
     <param name="link_name" value="$(arg arm_id)_link0" />
     <remap to="cartesian_impedance_example_controller/equilibrium_pose" from="equilibrium_pose" />
-  </node>
+  </node> -->
+
+  <!-- Bring up rqt_reconfigure to modify values -->
+  <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" required="false" />
+
 
   <!-- Convert franka state of EE to Geometry Message PoseStamped!! -->  
   <node name="franka_to_geometry_messages" pkg="franka_interactive_controllers" type="franka_to_geometry_messages.py" respawn="false" output="screen"/>
 
+  <!-- Bring up gripper GUI to control gripper from code -->  
+  <node name="franka_gui_gripper_run" pkg="franka_interactive_controllers" type="franka_gui_gripper_run.py" respawn="false" output="screen"/>
 
   <!-- Bring up rviz configuration -->
   <node  pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_interactive_controllers)/launch/robot_museum_sim.rviz" if="$(arg rviz)"/>
