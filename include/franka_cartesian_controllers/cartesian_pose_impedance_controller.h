@@ -15,7 +15,7 @@
 #include <ros/time.h>
 #include <Eigen/Dense>
 
-#include <franka_interactive_controllers/compliance_paramConfig.h>
+#include <franka_interactive_controllers/minimal_compliance_paramConfig.h>
 #include <franka_hw/franka_model_interface.h>
 #include <franka_hw/franka_state_interface.h>
 
@@ -48,7 +48,9 @@ class CartesianPoseImpedanceController : public controller_interface::MultiInter
   Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_;
   Eigen::Matrix<double, 6, 6> cartesian_damping_;
   Eigen::Matrix<double, 6, 6> cartesian_damping_target_;
+  Eigen::Matrix<double, 6, 1> default_cart_stiffness_target_;
   Eigen::Matrix<double, 7, 1> q_d_nullspace_;
+
   // whether to load from yaml or use initial robot config
   bool q_d_nullspace_initialized_ = false;
   Eigen::Vector3d position_d_;
@@ -57,22 +59,14 @@ class CartesianPoseImpedanceController : public controller_interface::MultiInter
   Eigen::Quaterniond orientation_d_target_;
 
   // Variables for initialization and tool compensation
-  bool _goto_home;
-  double jointDS_epsilon_;
-  double dq_filter_params_;
-  Eigen::Matrix<double, 7, 1> q_home_;
-  Eigen::Matrix<double, 7, 7> A_jointDS_home_;
-  Eigen::Matrix<double, 7, 7> k_joint_gains_;
-  Eigen::Matrix<double, 7, 7> d_joint_gains_;
-  Eigen::Matrix<double, 7, 7> d_ff_joint_gains_;
   Eigen::Matrix<double, 6, 1> tool_compensation_force_;
   bool activate_tool_compensation_;
   
   // Dynamic reconfigure
-  std::unique_ptr<dynamic_reconfigure::Server<franka_interactive_controllers::compliance_paramConfig>>
+  std::unique_ptr<dynamic_reconfigure::Server<franka_interactive_controllers::minimal_compliance_paramConfig>>
       dynamic_server_compliance_param_;
   ros::NodeHandle dynamic_reconfigure_compliance_param_node_;
-  void complianceParamCallback(franka_interactive_controllers::compliance_paramConfig& config,
+  void complianceParamCallback(franka_interactive_controllers::minimal_compliance_paramConfig& config,
                                uint32_t level);
 
   // Desireds pose subscriber

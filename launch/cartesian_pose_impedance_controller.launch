@@ -18,7 +18,7 @@
   
   <!-- Load desired controller-->  
   <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="cartesian_pose_impedance_controller"/>
-  <rosparam  ns="cartesian_pose_impedance_controller" command="load" file="$(find franka_interactive_controllers)/config/impedance_control_additional_params.yaml"/>
+  <rosparam  ns="cartesian_pose_impedance_controller" command="load" file="$(find franka_interactive_controllers)/config/pose_impedance_control_additional_params.yaml"/>
 
   <!-- IF interactive marker= true: Use interactive marker to define desired pose for impedance (stiffness + damping compensation) controller --> 
   <group if="$(arg use_interactive_marker)">

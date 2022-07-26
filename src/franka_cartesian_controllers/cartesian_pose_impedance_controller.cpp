@@ -41,65 +41,6 @@ bool CartesianPoseImpedanceController::init(hardware_interface::RobotHW* robot_h
     return false;
   }
 
-  // Initialize variables for tool compensation from yaml config file
-  activate_tool_compensation_ = true;
-  tool_compensation_force_.setZero();
-  std::vector<double> external_tool_compensation;
-  // tool_compensation_force_ << 0.46, -0.17, -1.64, 0, 0, 0;  //read from yaml
-  if (!node_handle.getParam("external_tool_compensation", external_tool_compensation) || external_tool_compensation.size() != 6) {
-      ROS_ERROR(
-          "CartesianPoseImpedanceController: Invalid or no external_tool_compensation parameters provided, "
-          "aborting controller init!");
-      return false;
-    }
-  for (size_t i = 0; i < 6; ++i) 
-    tool_compensation_force_[i] = external_tool_compensation.at(i);
-  ROS_INFO_STREAM("External tool compensation force: " << std::endl << tool_compensation_force_);
-
-  // Initialize variables for nullspace control from yaml config file
-  q_d_nullspace_.setZero();
-  std::vector<double> q_nullspace;
-  if (node_handle.getParam("q_nullspace", q_nullspace)) {
-    q_d_nullspace_initialized_ = true;
-    if (q_nullspace.size() != 7) {
-      ROS_ERROR(
-        "CartesianPoseImpedanceController: Invalid or no q_nullspace parameters provided, "
-        "aborting controller init!");
-      return false;
-    }
-    for (size_t i = 0; i < 7; ++i) 
-      q_d_nullspace_[i] = q_nullspace.at(i);
-    ROS_INFO_STREAM("Desired nullspace position (from YAML): " << std::endl << q_d_nullspace_);
-  }
-
-  // Initialize stiffness
-  cartesian_stiffness_target_.setIdentity();
-  cartesian_damping_target_.setIdentity();
-  std::vector<double> cartesian_stiffness_target_yaml;
-  if (!node_handle.getParam("cartesian_stiffness_target", cartesian_stiffness_target_yaml) || cartesian_stiffness_target_yaml.size() != 6) {
-    ROS_ERROR(
-      "CartesianPoseImpedanceController: Invalid or no cartesian_stiffness_target_yaml parameters provided, "
-      "aborting controller init!");
-    return false;
-  }
-  for (int i = 0; i < 6; i ++) {
-    cartesian_stiffness_target_(i,i) = cartesian_stiffness_target_yaml[i];
-  }
-  // Damping ratio = 1
-  for (int i = 0; i < 6; i ++) {
-    cartesian_damping_target_(i,i) = 2.0 * sqrt(cartesian_stiffness_target_yaml[i]);
-  }
-  ROS_INFO_STREAM("cartesian_stiffness_target_: " << std::endl <<  cartesian_stiffness_target_);
-  ROS_INFO_STREAM("cartesian_damping_target_: " << std::endl <<  cartesian_damping_target_);
-
-  if (!node_handle.getParam("nullspace_stiffness", nullspace_stiffness_target_) || nullspace_stiffness_target_ <= 0) {
-    ROS_ERROR(
-      "CartesianPoseImpedanceController: Invalid or no nullspace_stiffness parameters provided, "
-      "aborting controller init!");
-    return false;
-  }
-  ROS_INFO_STREAM("nullspace_stiffness_target_: " << std::endl <<  nullspace_stiffness_target_);
-
   // Getting libranka control interfaces
   auto* model_interface = robot_hw->get<franka_hw::FrankaModelInterface>();
   if (model_interface == nullptr) {
@@ -154,7 +95,7 @@ bool CartesianPoseImpedanceController::init(hardware_interface::RobotHW* robot_h
       ros::NodeHandle(node_handle.getNamespace() + "dynamic_reconfigure_compliance_param_node");
 
   dynamic_server_compliance_param_ = std::make_unique<
-      dynamic_reconfigure::Server<franka_interactive_controllers::compliance_paramConfig>>(
+      dynamic_reconfigure::Server<franka_interactive_controllers::minimal_compliance_paramConfig>>(
 
       dynamic_reconfigure_compliance_param_node_);
   dynamic_server_compliance_param_->setCallback(
@@ -169,43 +110,72 @@ bool CartesianPoseImpedanceController::init(hardware_interface::RobotHW* robot_h
   cartesian_stiffness_.setZero();
   cartesian_damping_.setZero();
 
-  // Parameters for goto_home at initialization!!
-  _goto_home = false;
+  ///////////////////////////////////////////////////////////////////////////
+  ////////////////  Parameter Initialization from YAML FILES!!!     /////////
+  ///////////////////////////////////////////////////////////////////////////
 
-  // Parameters for jointDS controller (THIS SHOULD BE IN ANOTHER SCRIPT!! DS MOTION GENERATOR?)
-  q_home_ << 0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4;
-  jointDS_epsilon_  = 0.05;
-  dq_filter_params_ = 0.555;
+   // Initialize stiffness and damping gains
+  cartesian_stiffness_target_.setIdentity();
+  cartesian_damping_target_.setIdentity();
+  std::vector<double> cartesian_stiffness_target_yaml;
+  if (!node_handle.getParam("cartesian_stiffness_target", cartesian_stiffness_target_yaml) || cartesian_stiffness_target_yaml.size() != 6) {
+    ROS_ERROR(
+      "CartesianPoseImpedanceController: Invalid or no cartesian_stiffness_target_yaml parameters provided, "
+      "aborting controller init!");
+    return false;
+  }
+  for (int i = 0; i < 6; i ++) {
+    cartesian_stiffness_target_(i,i) = cartesian_stiffness_target_yaml[i];
+  }
+  // Damping ratio = 1
+  default_cart_stiffness_target_ << 300, 300, 300, 50, 50, 50;
+  for (int i = 0; i < 6; i ++) {
+    if (cartesian_stiffness_target_yaml[i] == 0.0)
+      cartesian_damping_target_(i,i) = 2.0 * sqrt(default_cart_stiffness_target_[i]);
+    else
+      cartesian_damping_target_(i,i) = 2.0 * sqrt(cartesian_stiffness_target_yaml[i]);
+  }
+  ROS_INFO_STREAM("cartesian_stiffness_target_: " << std::endl <<  cartesian_stiffness_target_);
+  ROS_INFO_STREAM("cartesian_damping_target_: " << std::endl <<  cartesian_damping_target_);
 
-  A_jointDS_home_ = Eigen::MatrixXd::Identity(7, 7);
-  A_jointDS_home_(0,0) = 10; A_jointDS_home_(1,1) = 10; A_jointDS_home_(2,2) = 10;
-  A_jointDS_home_(3,3) = 10; A_jointDS_home_(4,4) = 15; A_jointDS_home_(5,5) = 15;
-  A_jointDS_home_(6,6) = 15;
-  ROS_INFO_STREAM("A (jointDS): " << std::endl <<  A_jointDS_home_);
+  if (!node_handle.getParam("nullspace_stiffness", nullspace_stiffness_target_) || nullspace_stiffness_target_ <= 0) {
+    ROS_ERROR(
+      "CartesianPoseImpedanceController: Invalid or no nullspace_stiffness parameters provided, "
+      "aborting controller init!");
+    return false;
+  }
+  ROS_INFO_STREAM("nullspace_stiffness_target_: " << std::endl <<  nullspace_stiffness_target_);
 
-  // Parameters for joint PD controller
-  // Ideal gains for Joint Impedance Controller
-  // k_gains: 600.0, 600.0, 600.0, 600.0, 250.0, 150.0, 50.0
-  // d_gains: 50.0, 50.0, 50.0, 20.0, 20.0, 20.0, 10.0
+  // Initialize variables for tool compensation from yaml config file
+  activate_tool_compensation_ = true;
+  tool_compensation_force_.setZero();
+  std::vector<double> external_tool_compensation;
+  // tool_compensation_force_ << 0.46, -0.17, -1.64, 0, 0, 0;  //read from yaml
+  if (!node_handle.getParam("external_tool_compensation", external_tool_compensation) || external_tool_compensation.size() != 6) {
+      ROS_ERROR(
+          "CartesianPoseImpedanceController: Invalid or no external_tool_compensation parameters provided, "
+          "aborting controller init!");
+      return false;
+    }
+  for (size_t i = 0; i < 6; ++i) 
+    tool_compensation_force_[i] = external_tool_compensation.at(i);
+  ROS_INFO_STREAM("External tool compensation force: " << std::endl << tool_compensation_force_);
 
-  // Gains for P error stiffness term
-  k_joint_gains_ = Eigen::MatrixXd::Identity(7, 7);
-  k_joint_gains_(0,0) = 500; k_joint_gains_(1,1) = 500; k_joint_gains_(2,2) = 500;
-  k_joint_gains_(3,3) = 500; k_joint_gains_(4,4) = 500; k_joint_gains_(5,5) = 500;
-  k_joint_gains_(6,6) = 200;
-  ROS_INFO_STREAM("K (joint stiffness): " << std::endl <<  k_joint_gains_);
-
-  // Gains for D error damping term
-  d_joint_gains_ = Eigen::MatrixXd::Identity(7, 7);
-  ROS_INFO_STREAM("D (joint damping): " << std::endl << d_joint_gains_);
-  d_joint_gains_(0,0) = 5; d_joint_gains_(1,1) = 5; d_joint_gains_(2,2) = 5;
-  d_joint_gains_(3,3) = 2; d_joint_gains_(4,4) = 2; d_joint_gains_(5,5) = 2;
-  d_joint_gains_(6,6) = 1;
-
-  // Gains for feed-forward damping term
-  d_ff_joint_gains_ = Eigen::MatrixXd::Identity(7, 7);
-
-
+  // Initialize variables for nullspace control from yaml config file
+  q_d_nullspace_.setZero();
+  std::vector<double> q_nullspace;
+  if (node_handle.getParam("q_nullspace", q_nullspace)) {
+    q_d_nullspace_initialized_ = true;
+    if (q_nullspace.size() != 7) {
+      ROS_ERROR(
+        "CartesianPoseImpedanceController: Invalid or no q_nullspace parameters provided, "
+        "aborting controller init!");
+      return false;
+    }
+    for (size_t i = 0; i < 7; ++i) 
+      q_d_nullspace_[i] = q_nullspace.at(i);
+    ROS_INFO_STREAM("Desired nullspace position (from YAML): " << std::endl << q_d_nullspace_);
+  }
   return true;
 }
 
@@ -282,7 +252,16 @@ void CartesianPoseImpedanceController::update(const ros::Time& /*time*/,
   error.tail(3) << -transform.linear() * error.tail(3);
 
   // Cartesian PD control with damping ratio = 1
-  tau_task << jacobian.transpose() *(-cartesian_stiffness_ * error - cartesian_damping_ * (jacobian * dq));
+  Eigen::Matrix<double, 6, 1> velocity;
+  velocity << jacobian * dq;
+  Eigen::VectorXd     F_ee_des_;
+  F_ee_des_.resize(6);
+  F_ee_des_ << -cartesian_stiffness_ * error - cartesian_damping_ * velocity;
+  tau_task << jacobian.transpose() * F_ee_des_;
+  ROS_WARN_STREAM_THROTTLE(0.5, "Current Velocity Norm:" << velocity.head(3).norm());
+  ROS_WARN_STREAM_THROTTLE(0.5, "Classic Linear Control Force:" << F_ee_des_.head(3).norm());
+  ROS_WARN_STREAM_THROTTLE(0.5, "Classic Angular Control Force :" << F_ee_des_.tail(3).norm());
+
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -292,12 +271,16 @@ void CartesianPoseImpedanceController::update(const ros::Time& /*time*/,
   pseudoInverse(jacobian.transpose(), jacobian_transpose_pinv);
 
   // nullspace PD control with damping ratio = 1
+  ROS_WARN_STREAM_THROTTLE(0.5, "Nullspace stiffness:" << nullspace_stiffness_); 
   tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
                     jacobian.transpose() * jacobian_transpose_pinv) *
                        (nullspace_stiffness_ * (q_d_nullspace_ - q) -
                         (2.0 * sqrt(nullspace_stiffness_)) * dq);
 
   ROS_WARN_STREAM_THROTTLE(0.5, "Nullspace torques:" << tau_nullspace.transpose());    
+  // double tau_nullspace_0 = tau_nullspace(0);
+  // tau_nullspace.setZero();
+  // tau_nullspace[0] = tau_nullspace_0; 
 
   // Compute tool compensation (scoop/camera in scooping task)
   if (activate_tool_compensation_)
@@ -307,10 +290,10 @@ void CartesianPoseImpedanceController::update(const ros::Time& /*time*/,
 
   // Desired torque
   tau_d << tau_task + tau_nullspace + coriolis - tau_tool;
+  ROS_WARN_STREAM_THROTTLE(0.5, "Desired control torque:" << tau_d.transpose());
 
   // Saturate torque rate to avoid discontinuities
   tau_d << saturateTorqueRate(tau_d, tau_J_d);
-
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_d(i));
   }
@@ -320,15 +303,9 @@ void CartesianPoseImpedanceController::update(const ros::Time& /*time*/,
 
   // update parameters changed online either through dynamic reconfigure or through the interactive
   // target by filtering
-  // cartesian_stiffness_ =
-  //     filter_params_ * cartesian_stiffness_target_ + (1.0 - filter_params_) * cartesian_stiffness_;
-  // cartesian_damping_ =
-  //     filter_params_ * cartesian_damping_target_ + (1.0 - filter_params_) * cartesian_damping_;
-  // nullspace_stiffness_ =
-  //     filter_params_ * nullspace_stiffness_target_ + (1.0 - filter_params_) * nullspace_stiffness_;
-  cartesian_stiffness_ = cartesian_stiffness_target_;
-  cartesian_damping_ = cartesian_damping_target_;
-  nullspace_stiffness_ = filter_params_;
+  cartesian_stiffness_  = cartesian_stiffness_target_;
+  cartesian_damping_    = cartesian_damping_target_;
+  nullspace_stiffness_  = nullspace_stiffness_target_;
   position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
   orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
 }
@@ -346,35 +323,17 @@ Eigen::Matrix<double, 7, 1> CartesianPoseImpedanceController::saturateTorqueRate
 }
 
 void CartesianPoseImpedanceController::complianceParamCallback(
-    franka_interactive_controllers::compliance_paramConfig& config,
+    franka_interactive_controllers::minimal_compliance_paramConfig& config,
     uint32_t /*level*/) {
-  // cartesian_stiffness_target_.setIdentity();
-  // cartesian_stiffness_target_.topLeftCorner(3, 3)
-  //     << config.translational_stiffness * Eigen::Matrix3d::Identity();
-  // cartesian_stiffness_target_.bottomRightCorner(3, 3)
-  //     << config.rotational_stiffness * Eigen::Matrix3d::Identity();
-  // cartesian_damping_target_.setIdentity();
-  
-  // Damping ratio = 1
-  // cartesian_damping_target_.topLeftCorner(3, 3)
-  //     << 2.0 * sqrt(config.translational_stiffness) * Eigen::Matrix3d::Identity();
-  // cartesian_damping_target_.bottomRightCorner(3, 3)
-  //     << 2.0 * sqrt(config.rotational_stiffness) * Eigen::Matrix3d::Identity();
-  
-  // nullspace_stiffness_target_ = config.nullspace_stiffness;
 
   activate_tool_compensation_ = config.activate_tool_compensation;
-
-  // ROS_INFO_STREAM("cartesian_stiffness_target_: " << std::endl <<  cartesian_stiffness_target_);
-  // ROS_INFO_STREAM("cartesian_damping_target_: " << std::endl <<  cartesian_damping_target_);
-  // ROS_INFO_STREAM("nullspace_stiffness_target_: " << std::endl <<  nullspace_stiffness_target_);
 }
 
 void CartesianPoseImpedanceController::desiredPoseCallback(
     const geometry_msgs::PoseStampedConstPtr& msg) {
 
   position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
-  ROS_INFO_STREAM("[CALLBACK] Desired ee position from DS: " << position_d_target_);
+  // ROS_INFO_STREAM("[CALLBACK] Desired ee position from DS: " << position_d_target_);
   
   Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
   orientation_d_target_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y,

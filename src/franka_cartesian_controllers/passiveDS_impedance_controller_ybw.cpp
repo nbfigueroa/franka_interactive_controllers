@@ -18,56 +18,7 @@
 #include <control_toolbox/filters.h>
 
 
-
 namespace franka_interactive_controllers {
-
-
-PassiveDS::PassiveDS(const double& lam0, const double& lam1):eigVal0(lam0),eigVal1(lam1){
-    set_damping_eigval(lam0,lam1);
-}
-
-PassiveDS::~PassiveDS(){}
-void PassiveDS::set_damping_eigval(const double& lam0, const double& lam1){
-    if((lam0 > 0)&&(lam1 > 0)){
-        eigVal0 = lam0;
-        eigVal1 = lam1;
-        damping_eigval(0,0) = eigVal0;
-        damping_eigval(1,1) = eigVal1;
-        damping_eigval(2,2) = eigVal1;
-    }else{
-        std::cerr << "wrong values for the eigenvalues"<<"\n";
-    }
-}
-void PassiveDS::updateDampingMatrix(const Eigen::Vector3d& ref_vel){ 
-
-    if(ref_vel.norm() > 1e-6){
-        baseMat.setRandom();
-        baseMat.col(0) = ref_vel.normalized();
-        for(uint i=1;i<3;i++){
-            for(uint j=0;j<i;j++)
-                baseMat.col(i) -= baseMat.col(j).dot(baseMat.col(i))*baseMat.col(j);
-            baseMat.col(i).normalize();
-        }
-        Dmat = baseMat*damping_eigval*baseMat.transpose();
-    }else{
-        Dmat = Eigen::Matrix3d::Identity();
-    }
-    // otherwise just use the last computed basis
-}
-
-void PassiveDS::update(const Eigen::Vector3d& vel, const Eigen::Vector3d& des_vel){
-    // compute damping
-    updateDampingMatrix(des_vel);
-    // dissipate
-    control_output = - Dmat * vel;
-    // compute control
-    control_output += eigVal0*des_vel;
-}
-Eigen::Vector3d PassiveDS::get_output(){ return control_output;}
-
-//************************************************
-
-
 
 bool PassiveDSImpedanceController::init(hardware_interface::RobotHW* robot_hw,
                                                ros::NodeHandle& node_handle) {
@@ -92,6 +43,47 @@ bool PassiveDSImpedanceController::init(hardware_interface::RobotHW* robot_hw,
         "aborting controller init!");
     return false;
   }
+
+  // // Initialize variables for tool compensation from yaml config file
+  // activate_tool_compensation_ = true;
+  // tool_compensation_force_.setZero();
+  // std::vector<double> external_tool_compensation;
+  // // tool_compensation_force_ << 0.46, -0.17, -1.64, 0, 0, 0;  //read from yaml
+  // if (!node_handle.getParam("external_tool_compensation", external_tool_compensation) || external_tool_compensation.size() != 6) {
+  //     ROS_ERROR(
+  //         "PassiveDSImpedanceController: Invalid or no external_tool_compensation parameters provided, "
+  //         "aborting controller init!");
+  //     return false;
+  //   }
+  // for (size_t i = 0; i < 6; ++i) 
+  //   tool_compensation_force_[i] = external_tool_compensation.at(i);
+  // ROS_INFO_STREAM("External tool compensation force: " << std::endl << tool_compensation_force_);
+
+  // // Initialize variables for nullspace control from yaml config file
+  // q_d_nullspace_.setZero();
+  // std::vector<double> q_nullspace;
+  // if (node_handle.getParam("q_nullspace", q_nullspace)) {
+  //   q_d_nullspace_initialized_ = true;
+  //   if (q_nullspace.size() != 7) {
+  //     ROS_ERROR(
+  //       "PassiveDSImpedanceController: Invalid or no q_nullspace parameters provided, "
+  //       "aborting controller init!");
+  //     return false;
+  //   }
+  //   for (size_t i = 0; i < 7; ++i) 
+  //     q_d_nullspace_[i] = q_nullspace.at(i);
+  //   ROS_INFO_STREAM("Desired nullspace position (from YAML): " << std::endl << q_d_nullspace_);
+  // }
+
+
+  // if (!node_handle.getParam("nullspace_stiffness", nullspace_stiffness_target_) || nullspace_stiffness_target_ <= 0) {
+  //   ROS_ERROR(
+  //     "PassiveDSImpedanceController: Invalid or no nullspace_stiffness parameters provided, "
+  //     "aborting controller init!");
+  //   return false;
+  // }
+  // ROS_INFO_STREAM("nullspace_stiffness_target_: " << std::endl <<  nullspace_stiffness_target_);
+
 
   // Getting libranka control interfaces
   auto* model_interface = robot_hw->get<franka_hw::FrankaModelInterface>();
@@ -190,9 +182,7 @@ bool PassiveDSImpedanceController::init(hardware_interface::RobotHW* robot_hw,
   // Initialize Passive DS controller
   damping_eigval0_ = damping_eigvals_yaml_(0);
   damping_eigval1_ = damping_eigvals_yaml_(1);
-  // passive_ds_controller.reset(new DSController(3,damping_eigval0_,damping_eigval1_)); //old way
-  passive_ds_controller = std::make_unique<PassiveDS>(100., 100.);
-  passive_ds_controller->set_damping_eigval(damping_eigval0_,damping_eigval1_);
+  passive_ds_controller.reset(new DSController(3,damping_eigval0_,damping_eigval1_)); 
 
   // Initialize nullspace params
   if (!node_handle.getParam("nullspace_stiffness", nullspace_stiffness_target_) || nullspace_stiffness_target_ <= 0) {
@@ -410,21 +400,14 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   ROS_WARN_STREAM_THROTTLE(0.5, "Desired Velocity Norm:" << dx_linear_des_.norm());
   ROS_WARN_STREAM_THROTTLE(0.5, "Current Velocity Norm:" << dx_linear_msr_.norm());
   F_ee_des_.setZero();
-
   if(dx_linear_des_.norm() > 1e-6){
-    // OLD PASSIVE DS IMPLEMENTATION
-    // passive_ds_controller->update(dx_linear_msr_,dx_linear_des_);
-    // F_linear_des_ = passive_ds_controller->control_output(); // (3 x 1)
-
-    passive_ds_controller->update(dx_linear_msr_,dx_linear_des_);
-    F_linear_des_ = passive_ds_controller->get_output(); 
-
+    passive_ds_controller->Update(dx_linear_msr_,dx_linear_des_);
+    F_linear_des_ = passive_ds_controller->control_output(); // (3 x 1)
     ROS_WARN_STREAM_THROTTLE(0.5, "Damping Eigenvalues:" << damping_eigval0_ << " " << damping_eigval1_);
     ROS_WARN_STREAM_THROTTLE(0.5, "PassiveDS Velocity Control Forces:" << F_linear_des_(0) << " " << F_linear_des_(1) << " " << F_linear_des_(2));  
-
   }
   else{
-    // Switch controller to cartesian impedance (Do this in a better way, should read target and switch to setpoint control)
+    // Switch controller to cartesian impedance
     Eigen::Vector3d tmp_position_error;
     tmp_position_error.setZero();
     tmp_position_error << position - position_d_;

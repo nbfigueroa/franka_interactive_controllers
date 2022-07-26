@@ -16,17 +16,38 @@
 #include <ros/time.h>
 #include <Eigen/Dense>
 
-// #include <franka_interactive_controllers/compliance_paramConfig.h>
 #include <franka_hw/franka_model_interface.h>
 #include <franka_hw/franka_state_interface.h>
 
 #include <franka_interactive_controllers/passive_ds_paramConfig.h>
-#include <passive_ds_controller.h>
+// #include <passive_ds_controller.h>
 #include <boost/scoped_ptr.hpp>
 #include <Eigen/Eigen>
 #include <dynamic_reconfigure/server.h>
 
 namespace franka_interactive_controllers {
+
+
+class PassiveDS
+{
+private:
+    double eigVal0;
+    double eigVal1;
+    Eigen::Matrix3d damping_eigval = Eigen::Matrix3d::Identity();
+    Eigen::Matrix3d baseMat = Eigen::Matrix3d::Identity();
+
+    Eigen::Matrix3d Dmat = Eigen::Matrix3d::Identity();
+    Eigen::Vector3d control_output = Eigen::Vector3d::Zero();
+    void updateDampingMatrix(const Eigen::Vector3d& ref_vel);
+public:
+    PassiveDS(const double& lam0, const double& lam1);
+    ~PassiveDS();
+    void set_damping_eigval(const double& lam0, const double& lam1);
+    void update(const Eigen::Vector3d& vel, const Eigen::Vector3d& des_vel);
+    Eigen::Vector3d get_output();
+};
+
+
 
 class PassiveDSImpedanceController : public controller_interface::MultiInterfaceController<
                                                 franka_hw::FrankaModelInterface,
@@ -59,6 +80,7 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
   Eigen::Matrix<double, 6, 6> cartesian_damping_target_;
   Eigen::Matrix<double, 7, 1> q_d_nullspace_;
   Eigen::Matrix<double, 6, 1> F_ext_hat_;
+  Eigen::Matrix<double, 3, 1> damping_eigvals_yaml_;
   // whether to load from yaml or use initial robot config
   bool q_d_nullspace_initialized_ = false;
   
@@ -76,42 +98,41 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
 
 
   // Variables for initialization and tool compensation
-  bool _goto_home;
-  double jointDS_epsilon_;
-  double dq_filter_params_;
-  Eigen::Matrix<double, 7, 1> q_home_;
-  Eigen::Matrix<double, 7, 7> A_jointDS_home_;
-  Eigen::Matrix<double, 7, 7> k_joint_gains_;
-  Eigen::Matrix<double, 7, 7> d_joint_gains_;
-  Eigen::Matrix<double, 7, 7> d_ff_joint_gains_;
+  // bool _goto_home;
+  // double jointDS_epsilon_;
+  // double dq_filter_params_;
+  // Eigen::Matrix<double, 7, 1> q_home_;
+  // Eigen::Matrix<double, 7, 7> A_jointDS_home_;
+  // Eigen::Matrix<double, 7, 7> k_joint_gains_;
+  // Eigen::Matrix<double, 7, 7> d_joint_gains_;
+  // Eigen::Matrix<double, 7, 7> d_ff_joint_gains_;
   Eigen::Matrix<double, 6, 1> tool_compensation_force_;
   bool activate_tool_compensation_;
+  bool update_impedance_params_;
 
   // For external torque and gravity compensation
   Eigen::Matrix<double, 7, 1> tau_ext_initial_;
 
   // Initialize DS controller
-  Vec                 dx_linear_des_;
-  Vec                 dx_linear_msr_;
-  Vec                 F_linear_des_;     // desired linear force 
-  Vec                 F_angular_des_;     // desired angular force
+  Eigen::Vector3d     dx_linear_des_;
+  Eigen::Vector3d     dx_linear_msr_;
+  Eigen::Vector3d     F_linear_des_;     // desired linear force 
+  Eigen::Vector3d     F_angular_des_;     // desired angular force
   Eigen::VectorXd     F_ee_des_;         // desired end-effector force
-  Vec                 orient_error;
+  Eigen::Vector3d     orient_error;
   bool                bDebug;
   bool                bSmooth;
   double              smooth_val_;
   double              rot_stiffness;
   double              rot_damping;
-  float               max_tank_level_, dz_;
-  realtype            damping_eigval0_;
-  realtype            damping_eigval1_;
-  realtype            damping_eigval0_filt_;
-  realtype            damping_eigval1_filt_;
-  bool                damped_reduced_;
+  double            damping_eigval0_;
+  double            damping_eigval1_;
+  Eigen::Matrix<double, 6, 1> default_cart_stiffness_target_;
 
 
   // Instantiate DS controller class
-  boost::scoped_ptr<DSController>   passive_ds_controller; // ignores passivity
+  // boost::scoped_ptr<DSController>   passive_ds_controller;
+  std::unique_ptr<PassiveDS> passive_ds_controller;
 
   // Dynamic reconfigure
   std::unique_ptr<dynamic_reconfigure::Server<franka_interactive_controllers::passive_ds_paramConfig>>

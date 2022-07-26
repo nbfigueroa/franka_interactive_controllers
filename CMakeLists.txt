@@ -30,6 +30,7 @@ find_package(Franka 0.7.0 REQUIRED)
 generate_messages()
 
 generate_dynamic_reconfigure_options(
+  cfg/minimal_compliance_param.cfg
   cfg/compliance_param.cfg
   cfg/compliance_full_param.cfg
   cfg/desired_mass_param.cfg

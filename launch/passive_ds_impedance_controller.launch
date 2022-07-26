@@ -17,6 +17,6 @@
   
   <!-- Load desired controller-->  
   <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="passive_ds_impedance_controller"/>
-  <rosparam  ns="passive_ds_impedance_controller" command="load" file="$(find franka_interactive_controllers)/config/impedance_control_additional_params.yaml"/>
+  <rosparam  ns="passive_ds_impedance_controller" command="load" file="$(find franka_interactive_controllers)/config/passiveDS_impedance_control_additional_params.yaml"/>
 
 </launch>
