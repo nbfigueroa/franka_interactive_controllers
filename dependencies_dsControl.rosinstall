@@ -4,7 +4,7 @@
     
 - git:
     local-name: robot_math_tools
-    uri: https://github.com/nbfigueroa-rlic/robot_math_tools.git
+    uri: https://github.com/upenn-figueroa-lab/robot_math_tools.git
     
 - git:
     local-name: fast-gmm
