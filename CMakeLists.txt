@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(catkin REQUIRED COMPONENTS
   controller_interface
-  passive_ds_control
+#   passive_ds_control
   control_toolbox
   dynamic_reconfigure
   eigen_conversions
@@ -43,7 +43,7 @@ catkin_package(
   LIBRARIES franka_interactive_controllers
   CATKIN_DEPENDS
     controller_interface
-    passive_ds_control
+#     passive_ds_control
     control_toolbox
     dynamic_reconfigure
     eigen_conversions
@@ -73,7 +73,9 @@ set(H_FILES ${INCLUDE_DIR}/franka_cartesian_controllers/cartesian_pose_impedance
             ${INCLUDE_DIR}/franka_joint_controllers/joint_position_franka_controller.h
             ${INCLUDE_DIR}/franka_joint_controllers/joint_velocity_franka_controller.h            
             ${INCLUDE_DIR}/franka_motion_generators/libfranka_joint_motion_generator.h
-            ${INCLUDE_DIR}/franka_utils/pseudo_inversion.h)
+            ${INCLUDE_DIR}/franka_utils/pseudo_inversion.h
+            ${INCLUDE_DIR}/franka_utils/kinematics_utils.hpp)
+
 
 ## Specify locations of header files
 ## Your package locations should be listed before other locations

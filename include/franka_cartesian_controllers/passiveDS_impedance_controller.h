@@ -20,14 +20,32 @@
 #include <franka_hw/franka_state_interface.h>
 
 #include <franka_interactive_controllers/passive_ds_paramConfig.h>
-// #include <passive_ds_controller.h>
 #include <boost/scoped_ptr.hpp>
 #include <Eigen/Eigen>
 #include <dynamic_reconfigure/server.h>
 
 namespace franka_interactive_controllers {
 
-
+//*************************************************************************************
+// PassiveDS Class taken from https://github.com/epfl-lasa/dual_iiwa_toolkit.git
+//|
+//|    Copyright (C) 2020 Learning Algorithms and Systems Laboratory, EPFL, Switzerland
+//|    Authors:  Farshad Khadivr (maintainer)
+//|    email:   farshad.khadivar@epfl.ch
+//|    website: lasa.epfl.ch
+//|
+//|    This file is part of iiwa_toolkit.
+//|
+//|    iiwa_toolkit is free software: you can redistribute it and/or modify
+//|    it under the terms of the GNU General Public License as published by
+//|    the Free Software Foundation, either version 3 of the License, or
+//|    (at your option) any later version.
+//|
+//|    iiwa_toolkit is distributed in the hope that it will be useful,
+//|    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//|    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//|    GNU General Public License for more details.
+//|
 class PassiveDS
 {
 private:
@@ -46,6 +64,7 @@ public:
     void update(const Eigen::Vector3d& vel, const Eigen::Vector3d& des_vel);
     Eigen::Vector3d get_output();
 };
+///////////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -75,12 +94,13 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
 
   const double delta_tau_max_{1.0};
   Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
-  Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_;
+  Eigen::Matrix<double, 6, 6> cartesian_stiffness_setpoint_ctrl_;
+  Eigen::Matrix<double, 6, 6> cartesian_stiffness_grav_comp_;  
   Eigen::Matrix<double, 6, 6> cartesian_damping_;
-  Eigen::Matrix<double, 6, 6> cartesian_damping_target_;
   Eigen::Matrix<double, 7, 1> q_d_nullspace_;
   Eigen::Matrix<double, 6, 1> F_ext_hat_;
-  Eigen::Matrix<double, 3, 1> damping_eigvals_yaml_;
+  Eigen::Matrix<double, 3, 1> damping_eigvals_yaml_; 
+  Eigen::Matrix<double, 3, 1> ang_damping_eigvals_yaml_;
   // whether to load from yaml or use initial robot config
   bool q_d_nullspace_initialized_ = false;
   
@@ -96,19 +116,10 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
   double last_cmd_time;
   double vel_cmd_timeout;
 
-
-  // Variables for initialization and tool compensation
-  // bool _goto_home;
-  // double jointDS_epsilon_;
-  // double dq_filter_params_;
-  // Eigen::Matrix<double, 7, 1> q_home_;
-  // Eigen::Matrix<double, 7, 7> A_jointDS_home_;
-  // Eigen::Matrix<double, 7, 7> k_joint_gains_;
-  // Eigen::Matrix<double, 7, 7> d_joint_gains_;
-  // Eigen::Matrix<double, 7, 7> d_ff_joint_gains_;
   Eigen::Matrix<double, 6, 1> tool_compensation_force_;
   bool activate_tool_compensation_;
   bool update_impedance_params_;
+  bool bPassiveOrient_;
 
   // For external torque and gravity compensation
   Eigen::Matrix<double, 7, 1> tau_ext_initial_;
@@ -116,23 +127,31 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
   // Initialize DS controller
   Eigen::Vector3d     dx_linear_des_;
   Eigen::Vector3d     dx_linear_msr_;
+  Eigen::Vector3d     dx_angular_des_;
+  Eigen::Vector3d     dx_angular_msr_;
+  
   Eigen::Vector3d     F_linear_des_;     // desired linear force 
-  Eigen::Vector3d     F_angular_des_;     // desired angular force
+  Eigen::Vector3d     F_angular_des_;    // desired angular force
   Eigen::VectorXd     F_ee_des_;         // desired end-effector force
   Eigen::Vector3d     orient_error;
+
+
+  double              damping_eigval0_;
+  double              damping_eigval1_;
+  double              ang_damping_eigval0_;
+  double              ang_damping_eigval1_;
+  Eigen::Matrix<double, 6, 1> default_cart_stiffness_target_;
+
+  // UNUSED SHOULD CLEAN UP!
   bool                bDebug;
   bool                bSmooth;
   double              smooth_val_;
   double              rot_stiffness;
   double              rot_damping;
-  double            damping_eigval0_;
-  double            damping_eigval1_;
-  Eigen::Matrix<double, 6, 1> default_cart_stiffness_target_;
-
 
   // Instantiate DS controller class
-  // boost::scoped_ptr<DSController>   passive_ds_controller;
   std::unique_ptr<PassiveDS> passive_ds_controller;
+  std::unique_ptr<PassiveDS> ang_passive_ds_controller;
 
   // Dynamic reconfigure
   std::unique_ptr<dynamic_reconfigure::Server<franka_interactive_controllers::passive_ds_paramConfig>>

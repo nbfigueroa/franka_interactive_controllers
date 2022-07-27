@@ -5,6 +5,16 @@
 - git:
     local-name: easy_kinesthetic_recording
     uri: https://github.com/nbfigueroa/easy-kinesthetic-recording
+
+- git:
+    local-name: record_ros
+    uri: https://github.com/nbfigueroa/record_ros.git
+    version: master
+    
+- git:
+    local-name: rosbag_to_mat
+    uri: https://github.com/nbfigueroa/rosbag_to_mat.git
+    version: main
    
 - git:
     local-name: ds_motion_generator
@@ -24,17 +34,3 @@
     uri: https://github.com/nbfigueroa/lpvDS-lib.git
     version: nadia
 
-- git:
-    local-name: passive-ds-control
-    uri: https://github.com/nbfigueroa/passive-ds-control.git
-    version: master
-
-- git:
-    local-name: record_ros
-    uri: https://github.com/nbfigueroa/record_ros.git
-    version: master
-    
-- git:
-    local-name: rosbag_to_mat
-    uri: https://github.com/nbfigueroa/rosbag_to_mat.git
-    version: main

@@ -1,19 +1,22 @@
-# Cartesian 6DOF Stiffness for pose impedance control (this controller will only use the Rotational component)
-# cartesian_stiffness_target: [600, 600, 600, 50, 50, 50] # Max values from franka example controllers
-cartesian_stiffness_target: [300, 300, 300, 50, 50, 50] # Max values from franka example controllers
-# cartesian_stiffness_target: [50, 1.0, 1.0, 50, 50, 50] # This yields gravity compensation basically -- need to test on real robot
+# ***** Cartesian 6DOF Stiffness for pose impedance control (this controller will only be used for when no velocity is sent or robot reaches attractor!) ***** #
+# cartesian_stiffness_target_setpoint_ctrl: [600, 600, 600, 50, 50, 50] # Max values from franka example controllers
+cartesian_stiffness_setpoint_ctrl: [300, 300, 300, 50, 50, 50] # Good tracking values
+cartesian_stiffness_grav_comp: [50, 1.0, 1.0, 50, 50, 50] # This will switch the controller to cartesian gravity compensation when no desired velocity is read
 
-# Damping gains for the linear passive velocity control law
-damping_eigenvalues: [125, 125, 125] #Kuka experiments use 100!.. 150 for franka already tracks desired velocity quite well
+# ***** Damping gains for the linear passive velocity control law ***** #
+linear_damping_eigenvalues:  [150, 150, 150] #Kuka experiments use 100!.. 150 for franka already tracks desired velocity quite well
+angular_damping_eigenvalues: [6., 6., 6.] # If activated in Yaml file it will use this for control during DS!
 
-# Nominal nullspace stiffness used for all joints
+# ***** Nominal nullspace stiffness used for all joints ***** #
 # nullspace_stiffness: 0.01
-nullspace_stiffness: 0.1 #Used in MIT MUSEUM DEMO
+nullspace_stiffness: 0.1 #Good behavior in sim
 
 # If leave commented, then will use q_initial as q_d_nullspace_
 q_nullspace: [0.0, -0.1516284550464292, 0.0, -2.1602991589328693, 0.0063609233109487425, 2.030401506252017, 0.8428664707532099]
 
-# F_ext wrench to compensate for camera or tool on end-effector
+# ***** F_ext wrench to compensate for camera or tool mounted on end-effector ***** #
 external_tool_compensation: [0, 0, 0.0, 0, 0.0, 0.0] #Check F_ext
+
+
 
 
