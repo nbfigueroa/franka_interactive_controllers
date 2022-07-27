@@ -10,6 +10,8 @@
 #include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Twist.h>
+#include <std_msgs/Int32.h>
+#include <std_msgs/Float32.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/robot_hw.h>
 #include <ros/node_handle.h>
@@ -141,10 +143,11 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
   double              ang_damping_eigval0_;
   double              ang_damping_eigval1_;
   Eigen::Matrix<double, 6, 1> default_cart_stiffness_target_;
+  bool                bVelCommand;
+  int                 cartestian_stiffness_mode_; // 0: grav-comp, 1: setpoint-track
 
   // UNUSED SHOULD CLEAN UP!
   bool                bDebug;
-  bool                bSmooth;
   double              smooth_val_;
   double              rot_stiffness;
   double              rot_damping;
@@ -152,6 +155,7 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
   // Instantiate DS controller class
   std::unique_ptr<PassiveDS> passive_ds_controller;
   std::unique_ptr<PassiveDS> ang_passive_ds_controller;
+  double ds_phase_;
 
   // Dynamic reconfigure
   std::unique_ptr<dynamic_reconfigure::Server<franka_interactive_controllers::passive_ds_paramConfig>>
@@ -164,7 +168,12 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
 
   // Desired twist subscriber (To take in desired DS velocity)
   ros::Subscriber sub_desired_twist_;
+  ros::Subscriber sub_ds_phase_;
+  ros::Subscriber sub_cart_stiffness_mode_;
   void desiredTwistCallback(const geometry_msgs::TwistConstPtr& msg);
+  void dsPhaseCallback(const std_msgs::Float32Ptr& msg);
+  void changeStiffnessModeCallback(const std_msgs::Int32Ptr& msg);
+
 };
 
 }  // namespace franka_interactive_controllers

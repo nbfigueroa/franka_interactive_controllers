@@ -1,11 +1,14 @@
-# ***** Cartesian 6DOF Stiffness for pose impedance control (this controller will only be used for when no velocity is sent or robot reaches attractor!) ***** #
-# cartesian_stiffness_target_setpoint_ctrl: [600, 600, 600, 50, 50, 50] # Max values from franka example controllers
-cartesian_stiffness_setpoint_ctrl: [300, 300, 300, 50, 50, 50] # Good tracking values
-cartesian_stiffness_grav_comp: [50, 1.0, 1.0, 50, 50, 50] # This will switch the controller to cartesian gravity compensation when no desired velocity is read
-
 # ***** Damping gains for the linear passive velocity control law ***** #
 linear_damping_eigenvalues:  [150, 150, 150] #Kuka experiments use 100!.. 150 for franka already tracks desired velocity quite well
-angular_damping_eigenvalues: [6., 6., 6.] # If activated in Yaml file it will use this for control during DS!
+angular_damping_eigenvalues: [5., 5., 5.] # If activated in Yaml file it will use this for control during DS!
+
+
+# ***** Cartesian 6DOF Stiffness for pose impedance control (this is the fallback controller used when no velocity is sent or robot reaches attractor!) ***** #
+# cartesian_stiffness_target_setpoint_ctrl: [600, 600, 600, 50, 50, 50] # Max values from franka example controllers
+cartesian_stiffness_setpoint_ctrl: [300, 300, 300, 50, 50, 50] # Good tracking values
+cartesian_stiffness_grav_comp: [50, 1.0, 1.0, 50, 50, 50] # This will switch the controller to cartesian gravity compensation when no desired velocity is read and mode=0
+# cartesian_stiffness_grav_comp: [0., 0., 0., 50, 50, 50] # This will switch the controller to cartesian gravity compensation when no desired velocity is read and mode=0
+cartesian_stiffness_mode: 0. # Initial fallback stiffness mode 0: grav-comp, 1: setpoint-track, this can be changed by publishing to /passive_ds/stiffness_mode topic
 
 # ***** Nominal nullspace stiffness used for all joints ***** #
 # nullspace_stiffness: 0.01

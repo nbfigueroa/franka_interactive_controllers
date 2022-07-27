@@ -88,12 +88,20 @@ Eigen::Vector3d PassiveDS::get_output(){ return control_output;}
 
 bool PassiveDSImpedanceController::init(hardware_interface::RobotHW* robot_hw,
                                                ros::NodeHandle& node_handle) {
-  std::vector<double> cartesian_stiffness_vector;
-  std::vector<double> cartesian_damping_vector;
 
 
+  // *********  Subscribers   ********* //
   sub_desired_twist_ = node_handle.subscribe(
       "/cartesian_impedance_controller/desired_twist", 20, &PassiveDSImpedanceController::desiredTwistCallback, this,
+      ros::TransportHints().reliable().tcpNoDelay());
+
+  sub_ds_phase_  = node_handle.subscribe(
+      "/passiveDS/ds_phase", 20, &PassiveDSImpedanceController::dsPhaseCallback, this,
+      ros::TransportHints().reliable().tcpNoDelay());
+
+
+  sub_cart_stiffness_mode_  = node_handle.subscribe(
+      "/passiveDS/stiffness_mode", 20, &PassiveDSImpedanceController::changeStiffnessModeCallback, this,
       ros::TransportHints().reliable().tcpNoDelay());
 
   // Getting ROSParams
@@ -163,8 +171,10 @@ bool PassiveDSImpedanceController::init(hardware_interface::RobotHW* robot_hw,
   ///////////////////////////////////////////////////////////////////////////
   ////////////////  Parameter Initialization from YAML FILES!!!     /////////
   ///////////////////////////////////////////////////////////////////////////
+  std::vector<double> cartesian_stiffness_vector;
+  std::vector<double> cartesian_damping_vector;
   update_impedance_params_    = false; // When set to true from dynamic reconfigure will overwrite yaml file values
-  
+
 
   // Initialize classical impedance stiffness stiffness matrices
   cartesian_stiffness_.setIdentity();
@@ -193,6 +203,16 @@ bool PassiveDSImpedanceController::init(hardware_interface::RobotHW* robot_hw,
   
   // Set the initial cartesian stiffness with grav comp values!
   cartesian_stiffness_ << cartesian_stiffness_grav_comp_;
+
+  // Initialize nullspace params
+  cartestian_stiffness_mode_ = 0; //Initial preference can be set from Yaml! (can be changed)
+  if (!node_handle.getParam("nullspace_stiffness", cartestian_stiffness_mode_)) {
+    ROS_ERROR(
+      "PassiveDSImpedanceController: Invalid or no cartestian_stiffness_mode_ parameters provided, "
+      "aborting controller init!");
+    return false;
+  }
+  ROS_INFO_STREAM("INIT cartestian_stiffness_mode_: " << cartestian_stiffness_mode_);
 
 
   // Damping ratio = 1
@@ -369,6 +389,7 @@ void PassiveDSImpedanceController::starting(const ros::Time& /*time*/) {
   elapsed_time    = ros::Duration(0.0);
   last_cmd_time   = 0.0;
   vel_cmd_timeout = 0.1;
+  ds_phase_       = 0.0;
 
 }
 
@@ -408,11 +429,16 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   elapsed_time += period;
   if(ros::Time::now().toSec() - last_cmd_time > vel_cmd_timeout){
     velocity_d_.setZero();
-    // ROS_WARN_STREAM_THROTTLE(0.5,"Command Timeout!");
-    bSmooth = false;
+    bVelCommand = false;
+    // Change stiffness values to grav comp from yaml
+    cartesian_stiffness_ << cartesian_stiffness_grav_comp_;
   }else{
-    bSmooth = true;
+    bVelCommand = true;
   }
+
+  // Change stiffness to setpoint control values from yaml or from ds phase
+  if (ds_phase_ == 1.0 || cartestian_stiffness_mode_ == 1)
+    cartesian_stiffness_ << cartesian_stiffness_setpoint_ctrl_;
 
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -429,24 +455,17 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
   /// set desired linear velocity
-  // dx_linear_des_(0)   = velocity_d_(0);
-  // dx_linear_des_(1)   = velocity_d_(1);
-  // dx_linear_des_(2)   = velocity_d_(2);
   dx_linear_des_ << velocity_d_;
 
   /// set measured linear velocity
-  // dx_linear_msr_(0)   = velocity(0);
-  // dx_linear_msr_(1)   = velocity(1);
-  // dx_linear_msr_(2)   = velocity(2);
-
   dx_linear_msr_ << velocity.head(3);
   dx_angular_msr_ << velocity.tail(3); 
 
-  ROS_WARN_STREAM_THROTTLE(0.5, "Desired Velocity:" << dx_linear_des_(0) << " " << dx_linear_des_(1) <<  " " << dx_linear_des_(2));
 
   // ------------------------------------------------------------------------//
   // ----------------- Linear Velocity Error -> Force -----------------------//
   // ------------------------------------------------------------------------//
+  // ROS_WARN_STREAM_THROTTLE(0.5, "Desired Velocity:" << dx_linear_des_(0) << " " << dx_linear_des_(1) <<  " " << dx_linear_des_(2));
   ROS_WARN_STREAM_THROTTLE(0.5, "Desired Velocity Norm:" << dx_linear_des_.norm());
   ROS_WARN_STREAM_THROTTLE(0.5, "Current Velocity Norm:" << dx_linear_msr_.norm());
   F_ee_des_.setZero();
@@ -458,7 +477,7 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
     F_linear_des_ << passive_ds_controller->get_output(); 
 
     ROS_WARN_STREAM_THROTTLE(0.5, "Damping Eigenvalues:" << damping_eigval0_ << " " << damping_eigval1_);
-    ROS_WARN_STREAM_THROTTLE(0.5, "PassiveDS Velocity Control Forces:" << F_linear_des_(0) << " " << F_linear_des_(1) << " " << F_linear_des_(2));  
+    // ROS_WARN_STREAM_THROTTLE(0.5, "PassiveDS Velocity Control Forces:" << F_linear_des_(0) << " " << F_linear_des_(1) << " " << F_linear_des_(2));  
 
   }
   else{
@@ -468,14 +487,14 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
     tmp_position_error << position - position_d_;
 
     // Computing control torque from cartesian pose error from integrated velocity command
+    ROS_WARN_STREAM_THROTTLE(0.5, "Cartesian Linear Stiffness:" << cartesian_stiffness_(0,0));  
     F_linear_des_ << -cartesian_stiffness_.topLeftCorner(3,3) * tmp_position_error - cartesian_damping_.topLeftCorner(3,3) * dx_linear_msr_;
-    ROS_WARN_STREAM_THROTTLE(0.5, "Set-point Control Forces:" << F_linear_des_(0) << " " << F_linear_des_(1) << " " << F_linear_des_(2)); 
+    // ROS_WARN_STREAM_THROTTLE(0.5, "Set-point Control Forces:" << F_linear_des_(0) << " " << F_linear_des_(1) << " " << F_linear_des_(2)); 
   }  
-  
   F_ee_des_.head(3) = F_linear_des_;
 
   // ----------------- Debug -----------------------//
-  ROS_WARN_STREAM_THROTTLE(0.5, "Estimated F_ext linear Norm:" << F_ext_hat_.head(3).norm());  
+  // ROS_WARN_STREAM_THROTTLE(0.5, "Estimated F_ext linear Norm:" << F_ext_hat_.head(3).norm());  
   ROS_WARN_STREAM_THROTTLE(0.5, "Linear Control Force:" << F_ee_des_.head(3).norm());
 
   // ------------------------------------------------------------------------//
@@ -508,6 +527,7 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
     dx_angular_des_  = 2 * dsGain_ori*(1+std::exp(theta_gq)) * tmp_angular_vel;
 
     // Passive DS Impedance Contoller for Angular Velocity Error
+    ROS_WARN_STREAM_THROTTLE(0.5, "Damping Eigenvalues:" << ang_damping_eigval0_ << " " << ang_damping_eigval1_);
     ang_passive_ds_controller->update(dx_angular_msr_,dx_angular_des_);
     F_angular_des_ << ang_passive_ds_controller->get_output(); 
 
@@ -518,12 +538,7 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
 
   }else{
 
-    //***** Using Classic Orientation Impedance control with FF Damped vel to track desired quaternion_d_ 
-
-    // Change stiffness values to setpoint control from yaml
-    cartesian_stiffness_ << cartesian_stiffness_setpoint_ctrl_;
-    ROS_WARN_STREAM_THROTTLE(0.5, "Cartesian Stiffness:" << cartesian_stiffness_(1,1) << " " << cartesian_stiffness_(2,2) << " " << cartesian_stiffness_(3,3));
- 
+    //***** Using Classic Orientation Impedance control with FF Damped vel to track desired quaternion_d_
     // Computing orientation error
     // Eigen::Vector3d orient_error;
     orient_error.setZero();
@@ -538,6 +553,7 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
     orient_error << -transform.linear() * orient_error;
 
     // Computing control force from cartesian orientation error and ff damped velocity (to damp any rotational motion!)
+    ROS_WARN_STREAM_THROTTLE(0.5, "Cartesian Rotational Stiffness:" << cartesian_stiffness_(3,3)); 
     F_angular_des_ << -cartesian_stiffness_.bottomRightCorner(3,3) * orient_error - cartesian_damping_.bottomRightCorner(3,3) * dx_angular_msr_;
   }
 
@@ -587,10 +603,9 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
     tau_tool.setZero();
 
   // FINAL DESIRED CONTROL TORQUE SENT TO ROBOT
-  // tau_d << tau_task_passive + tau_nullspace + coriolis - tau_tool + tau_ext_initial_; //Might not need the external..
+  // tau_d << tau_task_passive + tau_nullspace + coriolis - tau_tool + tau_ext_initial_; //Might not need the external.. need to check on the real robot
   tau_d << tau_task_passive + tau_nullspace +  coriolis - tau_tool; 
-
-  ROS_WARN_STREAM_THROTTLE(0.5, "Desired control torque:" << tau_d.transpose());
+  // ROS_WARN_STREAM_THROTTLE(0.5, "Desired control torque:" << tau_d.transpose());
 
   // Saturate torque rate to avoid discontinuities
   tau_d << saturateTorqueRate(tau_d, tau_J_d);
@@ -663,6 +678,21 @@ void PassiveDSImpedanceController::desiredTwistCallback(
   position_d_target_ << position + velocity_d_*dt_call*int_gain; //Int_gain: Scaling to make it faster! (200 goes way faster than the desired
 
 }
+
+void PassiveDSImpedanceController::dsPhaseCallback(
+    const std_msgs::Float32Ptr& msg) {
+
+  ds_phase_ = msg->data;
+  ROS_WARN_STREAM_THROTTLE(0.5, "Linear DS Phase:" << ds_phase_);
+}
+
+void PassiveDSImpedanceController::changeStiffnessModeCallback(
+    const std_msgs::Int32Ptr& msg) {
+
+  cartestian_stiffness_mode_ = msg->data;
+  ROS_WARN_STREAM_THROTTLE(0.5, "Stiffness Mode Change:" << cartestian_stiffness_mode_);
+}
+
 
 }  // namespace franka_interactive_controllers
 
