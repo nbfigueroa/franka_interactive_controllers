@@ -4,7 +4,7 @@
   <arg name="load_gripper"        default="true" />
   <arg name="use_gripper_gui"     default="true" />
   <arg name="bringup_rviz"        default="true" />
-  <arg name="load_franka_control" default="false" />
+  <arg name="load_franka_control" default="true" />
   <arg name="controller"          default="passiveDS_impedance"   doc="Which controller should be started? (One of {cartesian_pose, cartesian_twist, passiveDS}_impedance_controller )" />
 
   <!-- Bringup franka_interactive_bringup.launch and gravity compensation controller!-->

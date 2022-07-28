@@ -6,11 +6,16 @@ angular_damping_eigenvalues: [5., 5., 5.] # If activated in Yaml file it will us
 
 
 # ***** Cartesian 6DOF Stiffness for pose impedance control (this is the fallback controller used when no velocity is sent or robot reaches attractor!) ***** #
-cartesian_stiffness_setpoint_ctrl: [600, 600, 600, 50, 50, 50] # Max values from franka example controllers
-# cartesian_stiffness_setpoint_ctrl: [300, 300, 300, 50, 50, 50] # Good tracking values
-cartesian_stiffness_grav_comp: [50, 10.0, 10.0, 50, 50, 50] # This will switch the controller to cartesian gravity compensation when no desired velocity is read and mode=0
-# cartesian_stiffness_grav_comp: [0., 0., 0., 50, 50, 50] # This will switch the controller to cartesian gravity compensation when no desired velocity is read and mode=0
-cartesian_stiffness_mode: 1 # Initial fallback stiffness mode 0: grav-comp, 1: setpoint-track, this can be changed by publishing to /passive_ds/stiffness_mode topic
+# cartesian_stiffness_setpoint_ctrl: [600, 600, 600, 50, 50, 50] # Max values from franka example controllers
+cartesian_stiffness_setpoint_ctrl: [300, 300, 300, 50, 50, 50] # Good tracking values
+## FOR GAZEBO
+# cartesian_stiffness_grav_comp: [50.0, 1.0, 1.0, 50, 50, 50] # This will switch the controller to cartesian gravity compensation when no desired velocity is read and mode=0
+
+## FOR REAL-ROBOT
+cartesian_stiffness_grav_comp: [0., 0., 0., 50, 50, 50] # This will switch the controller to cartesian gravity compensation when no desired velocity is read and mode=0
+
+# Which mode should the execution start with?
+cartesian_stiffness_mode: 0 # Initial fallback stiffness mode 0: grav-comp, 1: setpoint-track, this can be changed by publishing to /passive_ds/stiffness_mode topic
 
 # ***** Nominal nullspace stiffness used for all joints ***** #
 # nullspace_stiffness: 0.01
