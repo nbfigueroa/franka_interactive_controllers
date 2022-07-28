@@ -96,9 +96,11 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
 
   const double delta_tau_max_{1.0};
   Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
+  Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_;
   Eigen::Matrix<double, 6, 6> cartesian_stiffness_setpoint_ctrl_;
   Eigen::Matrix<double, 6, 6> cartesian_stiffness_grav_comp_;  
   Eigen::Matrix<double, 6, 6> cartesian_damping_;
+  Eigen::Matrix<double, 6, 6> cartesian_damping_target_;
   Eigen::Matrix<double, 7, 1> q_d_nullspace_;
   Eigen::Matrix<double, 6, 1> F_ext_hat_;
   Eigen::Matrix<double, 3, 1> damping_eigvals_yaml_; 
@@ -144,7 +146,7 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
   double              ang_damping_eigval1_;
   Eigen::Matrix<double, 6, 1> default_cart_stiffness_target_;
   bool                bVelCommand;
-  int                 cartestian_stiffness_mode_; // 0: grav-comp, 1: setpoint-track
+  int                 cartesian_stiffness_mode_; // 0: grav-comp, 1: setpoint-track
 
   // UNUSED SHOULD CLEAN UP!
   bool                bDebug;

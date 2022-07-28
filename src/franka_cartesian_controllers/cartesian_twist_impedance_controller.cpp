@@ -23,10 +23,6 @@ bool CartesianTwistImpedanceController::init(hardware_interface::RobotHW* robot_
   std::vector<double> cartesian_stiffness_vector;
   std::vector<double> cartesian_damping_vector;
 
-  // sub_desired_pose_ = node_handle.subscribe(
-  //     "/cartesian_impedance_controller/desired_pose", 20, &CartesianTwistImpedanceController::desiredPoseCallback, this,
-  //     ros::TransportHints().reliable().tcpNoDelay());
-
   sub_desired_twist_ = node_handle.subscribe(
       "/cartesian_impedance_controller/desired_twist", 20, &CartesianTwistImpedanceController::desiredTwistCallback, this,
       ros::TransportHints().reliable().tcpNoDelay());
@@ -185,7 +181,6 @@ bool CartesianTwistImpedanceController::init(hardware_interface::RobotHW* robot_
   }
 
 
-
   return true;
 }
 
@@ -312,10 +307,7 @@ void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
                     jacobian.transpose() * jacobian_transpose_pinv) *
                        (nullspace_stiffness_ * (q_d_nullspace_ - q) -
                         (2.0 * sqrt(nullspace_stiffness_)) * dq);
-  ROS_WARN_STREAM_THROTTLE(0.5, "Nullspace torques:" << tau_nullspace.transpose()); 
-  // double tau_nullspace_0 = tau_nullspace(0);
-  // tau_nullspace.setZero();
-  // tau_nullspace[0] = tau_nullspace_0;                     
+  // ROS_WARN_STREAM_THROTTLE(0.5, "Nullspace torques:" << tau_nullspace.transpose()); 
 
   // Compute tool compensation (scoop/camera in scooping task)
   if (activate_tool_compensation_)
@@ -325,7 +317,7 @@ void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
 
   // FINAL DESIRED CONTROL TORQUE SENT TO ROBOT
   tau_d << tau_task + tau_nullspace + coriolis - tau_tool;
-  ROS_WARN_STREAM_THROTTLE(0.5, "Desired control torque:" << tau_d.transpose());
+  // ROS_WARN_STREAM_THROTTLE(0.5, "Desired control torque:" << tau_d.transpose());
 
   // Saturate torque rate to avoid discontinuities
   tau_d << saturateTorqueRate(tau_d, tau_J_d);

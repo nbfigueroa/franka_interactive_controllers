@@ -5,6 +5,7 @@
   <arg name="use_gripper_gui"     default="true" />
   <arg name="bringup_rviz"        default="true" />
   <arg name="load_franka_control" default="false" />
+  <arg name="controller"          default="passiveDS_impedance"   doc="Which controller should be started? (One of {cartesian_pose, cartesian_twist, passiveDS}_impedance_controller )" />
 
   <!-- Bringup franka_interactive_bringup.launch and gravity compensation controller!-->
   <group if="$(arg load_franka_control)">
@@ -25,6 +26,21 @@
   <node if="$(arg use_gripper_gui)" name="franka_gui_gripper_run" pkg="franka_interactive_controllers" type="franka_gui_gripper_run.py" respawn="false" output="screen"/>
 
   <!-- Bring up rviz configuration -->
-  <node if="$(arg bringup_rviz)" pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_interactive_controllers)/launch/robot.rviz"/>
+  <node  pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_interactive_controllers)/launch/rviz/franka_description.rviz" if="$(arg rviz)"/>
+
+  <!-- Start only if cartesian_pose_impedance_controller is set in "controller"-->
+  <include file="$(find franka_interactive_controllers)/launch/cartesian_pose_impedance_controller.launch" 
+    if="$(eval arg('controller') == 'cartesian_pose_impedance')">
+  </include>
+
+
+  <!-- Start only if cartesian_twist_impedance_controller is set in "controller"-->
+  <include file="$(find franka_interactive_controllers)/launch/cartesian_twist_impedance_controller.launch" if="$(eval arg('controller') == 'cartesian_twist_impedance')">
+  </include>
+
+  <!-- Start only if passive_ds_impedance_controller is set in "controller"-->
+  <include file="$(find franka_interactive_controllers)/launch/passiveDS_impedance_controller.launch" if="$(eval arg('controller') == 'passiveDS_impedance')">
+  </include>
+
 
 </launch>

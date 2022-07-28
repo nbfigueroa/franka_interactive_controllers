@@ -4,6 +4,7 @@
   <arg name="load_gripper"           default="true" />
   <arg name="use_gripper_gui"        default="true" />
   <arg name="load_franka_control"    default="false" />
+  <arg name="params_yaml_file"       default="$(find franka_interactive_controllers)/config/passiveDS_impedance_control_additional_params.yaml" />
 
   <!-- Bringup franka_interactive_bringup.laucnh -->
   <group if="$(arg load_franka_control)">
@@ -17,6 +18,6 @@
   
   <!-- Load desired controller-->  
   <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="passive_ds_impedance_controller"/>
-  <rosparam  ns="passive_ds_impedance_controller" command="load" file="$(find franka_interactive_controllers)/config/passiveDS_impedance_control_additional_params.yaml"/>
+  <rosparam  ns="passive_ds_impedance_controller" command="load" file="$(arg params_yaml_file)"/>
 
 </launch>
