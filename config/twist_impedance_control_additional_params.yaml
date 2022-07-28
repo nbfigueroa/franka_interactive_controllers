@@ -1,5 +1,5 @@
 # Cartesian 6DOF Stiffness for pose impedance control
-cartesian_stiffness_target: [600, 600, 600, 50, 50, 50] # Max values from franka example controllers (For good tracking with 200 integration gain)
+cartesian_stiffness_target: [600, 600, 600, 60, 60, 60] # Max values from franka example controllers (For good tracking with 200 integration gain)
 # cartesian_stiffness_target: [300, 300, 300, 50, 50, 50] # Follows target and is somewhat compliant at the same time 
 # cartesian_stiffness_target: [50.0, 1.0, 1.0, 50, 50, 50] # This yields gravity compensation basically -- need to test on real robot
 

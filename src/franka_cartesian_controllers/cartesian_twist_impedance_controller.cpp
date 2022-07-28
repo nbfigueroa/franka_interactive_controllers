@@ -386,8 +386,8 @@ void CartesianTwistImpedanceController::desiredTwistCallback(
   Eigen::Vector3d position(transform.translation());
 
   double dt_call = 1./1000;
-  double int_gain = 200;
-  position_d_target_        << position + velocity_d_*dt_call*int_gain; //Int_gain: Scaling to make it faster! (200 goes way faster than the desired)
+  double int_gain = 250;
+  position_d_target_  << position + velocity_d_*dt_call*int_gain; //Int_gain: Scaling to make it faster! (200 goes way faster than the desired)
 }
 
 }  // namespace franka_interactive_controllers
