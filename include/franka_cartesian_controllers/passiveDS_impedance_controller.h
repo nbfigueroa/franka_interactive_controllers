@@ -105,6 +105,7 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
   Eigen::Matrix<double, 6, 1> F_ext_hat_;
   Eigen::Matrix<double, 3, 1> damping_eigvals_yaml_; 
   Eigen::Matrix<double, 3, 1> ang_damping_eigvals_yaml_;
+  
   // whether to load from yaml or use initial robot config
   bool q_d_nullspace_initialized_ = false;
   
