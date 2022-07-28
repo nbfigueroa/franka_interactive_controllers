@@ -26,7 +26,7 @@
   <node if="$(arg use_gripper_gui)" name="franka_gui_gripper_run" pkg="franka_interactive_controllers" type="franka_gui_gripper_run.py" respawn="false" output="screen"/>
 
   <!-- Bring up rviz configuration -->
-  <node  pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_interactive_controllers)/launch/rviz/franka_description.rviz" if="$(arg rviz)"/>
+  <node  pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_interactive_controllers)/launch/rviz/franka_description.rviz" if="$(arg bringup_rviz)"/>
 
   <!-- Start only if cartesian_pose_impedance_controller is set in "controller"-->
   <include file="$(find franka_interactive_controllers)/launch/cartesian_pose_impedance_controller.launch" 
