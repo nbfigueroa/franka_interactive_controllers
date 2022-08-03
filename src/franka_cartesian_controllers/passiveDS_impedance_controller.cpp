@@ -494,21 +494,8 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
     // ------------------------------------------------------------------------//
 
     // MODIFY VELOCITIES FOR ACCURATE ATTRACTOR TRACKING
-    ROS_WARN_STREAM_THROTTLE(0.5, "Linear DS Phase:" << ds_phase_);
-    // if (ds_phase_ < 0.010){
-    //   ROS_WARN_STREAM_THROTTLE(0.5, "DOING LINEAR DS FOR ACCURACY @ attractor");
-    //      Eigen::Vector3d tmp_position_error;
-    //      tmp_position_error.setZero();
-    //      tmp_position_error << position - position_d_; 
-    //   Eigen::Vector3d deltaX = -tmp_position_error;
-    //   double maxDx (0.10), dsGain_pos(1.0);
-    //   if (deltaX.norm() > maxDx)
-    //       deltaX = maxDx * deltaX.normalized();
-
-    //   double theta_g = (-.5/(4*maxDx*maxDx)) * deltaX.transpose() * deltaX;
-    //   dx_linear_des_ = dsGain_pos*(1+std::exp(theta_g)) *deltaX;
-    // }
-
+    // ROS_WARN_STREAM_THROTTLE(0.5, "Linear DS Phase:" << ds_phase_);
+   
     // Passive DS Impedance Contoller for Linear Velocity Error
     F_linear_des_.setZero();
     passive_ds_controller->update(dx_linear_msr_,dx_linear_des_);
@@ -567,11 +554,26 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
 
   // nullspace PD control with damping ratio = 1
   ROS_WARN_STREAM_THROTTLE(0.5, "Nullspace stiffness:" << nullspace_stiffness_);
+  // tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
+  //                   jacobian.transpose() * jacobian_transpose_pinv) *
+  //                      (nullspace_stiffness_ * (q_d_nullspace_ - q) -
+  //                       (2.0 * sqrt(nullspace_stiffness_)) * dq);
+
+
+  Eigen::VectorXd nullspace_stiffness_vec(7);
+  // My intents to figure out good gains!.. this could be learned...
+  // nullgains << 1.,60,10.,40,5.,1.,1.; // These are optimal values for KUKA IIWA
+  // double nominal_stiffness = 0.1; // This could be read from yaml file
+  // These values are what was psuedo-working in the real robot
+  nullspace_stiffness_vec <<  0.05*nullspace_stiffness_, 0.5*nullspace_stiffness_, 5*nullspace_stiffness_, 0.15*nullspace_stiffness_, 
+  0.5*nullspace_stiffness_, 0.01*nullspace_stiffness_, 0.01*nullspace_stiffness_;
+
+  for (int i=0; i<7; i++)
+    tau_nullspace_error(i) = nullspace_stiffness_vec(i) * (q_d_nullspace_(i) - q(i));
   tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
                     jacobian.transpose() * jacobian_transpose_pinv) *
-                       (nullspace_stiffness_ * (q_d_nullspace_ - q) -
-                        (2.0 * sqrt(nullspace_stiffness_)) * dq);
-  // ROS_WARN_STREAM_THROTTLE(0.5, "Nullspace torques:" << tau_nullspace.transpose()); 
+                       (tau_nullspace_error - (2.0 * sqrt(nullspace_stiffness_)) * dq);
+
 
   // Compute tool compensation (scoop/camera in scooping task)
   if (activate_tool_compensation_)
@@ -628,10 +630,7 @@ void PassiveDSImpedanceController::passiveDSParamCallback(
       passive_ds_controller->set_damping_eigval(damping_eigval0_,damping_eigval1_);
 
   }
-
-
 }
-
 
 void PassiveDSImpedanceController::desiredTwistCallback(
     const geometry_msgs::TwistConstPtr& msg) {
@@ -679,11 +678,6 @@ PLUGINLIB_EXPORT_CLASS(franka_interactive_controllers::PassiveDSImpedanceControl
                        controller_interface::ControllerBase)
 
 
-
-
-
-
-
   //   // else{
 
     //***** Using Classic Orientation Impedance control with FF Damped vel to track desired quaternion_d_
@@ -708,9 +702,6 @@ PLUGINLIB_EXPORT_CLASS(franka_interactive_controllers::PassiveDSImpedanceControl
   // // Feed angular component control wrench 
   // F_ee_des_.tail(3) << F_angular_des_;
   // ROS_WARN_STREAM_THROTTLE(0.5, "Angular Control Force :" << F_ee_des_.tail(3).norm());
-
-
-
 
 
   // // pseudoinverse for nullspace handling
