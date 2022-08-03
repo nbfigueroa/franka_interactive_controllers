@@ -425,6 +425,7 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   elapsed_time += period;
   if(ros::Time::now().toSec() - last_cmd_time > vel_cmd_timeout){
     velocity_d_.setZero();
+    ds_phase_ = 100.0;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -500,7 +501,7 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
          tmp_position_error.setZero();
          tmp_position_error << position - position_d_; 
       Eigen::Vector3d deltaX = -tmp_position_error;
-      double maxDx (0.20), dsGain_pos(5.0);
+      double maxDx (0.10), dsGain_pos(1.0);
       if (deltaX.norm() > maxDx)
           deltaX = maxDx * deltaX.normalized();
 
@@ -643,7 +644,7 @@ void PassiveDSImpedanceController::desiredTwistCallback(
   Eigen::Vector3d position(transform.translation());
 
   double dt_call = 1./1000;
-  double int_gain = 200;    
+  double int_gain = 100;    
   position_d_target_ << position + velocity_d_*dt_call*int_gain; //Int_gain: Scaling to make it faster! (200 goes way faster than the desired    
 
 }
