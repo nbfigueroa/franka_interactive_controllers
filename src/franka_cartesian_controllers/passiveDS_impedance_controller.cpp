@@ -495,19 +495,19 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
 
     // MODIFY VELOCITIES FOR ACCURATE ATTRACTOR TRACKING
     ROS_WARN_STREAM_THROTTLE(0.5, "Linear DS Phase:" << ds_phase_);
-    if (ds_phase_ < 0.010){
-      ROS_WARN_STREAM_THROTTLE(0.5, "DOING LINEAR DS FOR ACCURACY @ attractor");
-         Eigen::Vector3d tmp_position_error;
-         tmp_position_error.setZero();
-         tmp_position_error << position - position_d_; 
-      Eigen::Vector3d deltaX = -tmp_position_error;
-      double maxDx (0.10), dsGain_pos(1.0);
-      if (deltaX.norm() > maxDx)
-          deltaX = maxDx * deltaX.normalized();
+    // if (ds_phase_ < 0.010){
+    //   ROS_WARN_STREAM_THROTTLE(0.5, "DOING LINEAR DS FOR ACCURACY @ attractor");
+    //      Eigen::Vector3d tmp_position_error;
+    //      tmp_position_error.setZero();
+    //      tmp_position_error << position - position_d_; 
+    //   Eigen::Vector3d deltaX = -tmp_position_error;
+    //   double maxDx (0.10), dsGain_pos(1.0);
+    //   if (deltaX.norm() > maxDx)
+    //       deltaX = maxDx * deltaX.normalized();
 
-      double theta_g = (-.5/(4*maxDx*maxDx)) * deltaX.transpose() * deltaX;
-      dx_linear_des_ = dsGain_pos*(1+std::exp(theta_g)) *deltaX;
-    }
+    //   double theta_g = (-.5/(4*maxDx*maxDx)) * deltaX.transpose() * deltaX;
+    //   dx_linear_des_ = dsGain_pos*(1+std::exp(theta_g)) *deltaX;
+    // }
 
     // Passive DS Impedance Contoller for Linear Velocity Error
     F_linear_des_.setZero();
@@ -644,7 +644,7 @@ void PassiveDSImpedanceController::desiredTwistCallback(
   Eigen::Vector3d position(transform.translation());
 
   double dt_call = 1./1000;
-  double int_gain = 100;    
+  double int_gain = 200;    
   position_d_target_ << position + velocity_d_*dt_call*int_gain; //Int_gain: Scaling to make it faster! (200 goes way faster than the desired    
 
 }

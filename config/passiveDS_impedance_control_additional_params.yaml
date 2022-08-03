@@ -7,7 +7,7 @@ angular_damping_eigenvalues: [5., 5., 5.] # If activated in Yaml file it will us
 
 # ***** Cartesian 6DOF Stiffness for pose impedance control (this is the fallback controller used when no velocity is sent or robot reaches attractor!) ***** #
 # cartesian_stiffness_setpoint_ctrl: [600, 600, 600, 50, 50, 50] # Max values from franka example controllers
-cartesian_stiffness_setpoint_ctrl: [300, 300, 300, 50, 50, 50] # Good tracking values
+cartesian_stiffness_setpoint_ctrl: [500, 500, 500, 50, 50, 50] # Good tracking values
 ## FOR GAZEBO
 # cartesian_stiffness_grav_comp: [50.0, 1.0, 1.0, 50, 50, 50] # This will switch the controller to cartesian gravity compensation when no desired velocity is read and mode=0
 
