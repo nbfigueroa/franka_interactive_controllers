@@ -173,7 +173,7 @@ bool PassiveDSImpedanceController::init(hardware_interface::RobotHW* robot_hw,
   position_d_target_.setZero();
   orientation_d_target_.coeffs() << 0.0, 0.0, 0.0, 1.0;
   velocity_d_.setZero();
-
+  do_cart_imp_ = false;
 
   // Passive DS Variable Initializatin=on
   dx_linear_des_.resize(3);
@@ -226,23 +226,19 @@ bool PassiveDSImpedanceController::init(hardware_interface::RobotHW* robot_hw,
   }
   ROS_INFO_STREAM("INIT cartesian_stiffness_mode_: " << cartesian_stiffness_mode_);
 
-  for (int i = 0; i < 6; i ++){
+  cartesian_damping_target_.setIdentity();
+
+  for (int i = 0; i < 6; i ++){  
     // Set the initial cartesian stiffness with grav comp values!
     if (cartesian_stiffness_mode_ == 0)
       cartesian_stiffness_target_(i,i) = cartesian_stiffness_grav_comp_(i,i);
     else    
       cartesian_stiffness_target_(i,i) = cartesian_stiffness_setpoint_ctrl_(i,i);
+
+    // Damping ratio = 1
+    cartesian_damping_target_(i,i) = 2.0 * sqrt(cartesian_stiffness_target_(i,i));
   }
 
-  // Damping ratio = 1
-  cartesian_damping_target_.setIdentity();
-  default_cart_stiffness_target_ << 300, 300, 300, 50, 50, 50;
-  for (int i = 0; i < 6; i ++) {
-    if (cartesian_stiffness_(i) == 0.0)
-      cartesian_damping_target_(i,i) = 2.0 * sqrt(default_cart_stiffness_target_(i));
-    else
-      cartesian_damping_target_(i,i) = 2.0 * sqrt(cartesian_stiffness_target_(i));
-  }
   ROS_INFO_STREAM("cartesian_stiffness_target_: " <<  cartesian_stiffness_target_);
   ROS_INFO_STREAM("cartesian_damping_target_: " << cartesian_damping_target_);
 
@@ -425,7 +421,6 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   elapsed_time += period;
   if(ros::Time::now().toSec() - last_cmd_time > vel_cmd_timeout){
     velocity_d_.setZero();
-    ds_phase_ = 100.0;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -436,9 +431,14 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   // allocate control torque variables to compute and aggregate
   Eigen::VectorXd tau_task(7), tau_nullspace(7), tau_nullspace_error(7), tau_d(7), tau_tool(7);
 
-  bool do_cart_imp = false;
-  if (velocity_d_.norm()<0.0001)
-    do_cart_imp = true;
+  if (velocity_d_.norm()<0.0001){
+    do_cart_imp_ = true;
+    ROS_WARN_STREAM_THROTTLE(0.5, "DOING CARTESIAN IMPEDANCE");  
+  }
+  else{
+    do_cart_imp_ = false;
+    ROS_WARN_STREAM_THROTTLE(0.5, "DOING PASSIVE DS");
+  }
 
   // For Debugging...
   // do_cart_imp = true;
@@ -447,7 +447,7 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
 
   Eigen::VectorXd     F_ee_des_;
   F_ee_des_.resize(6);  
-  if (do_cart_imp){
+  if (do_cart_imp_){
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //++++++++++++++ CLASSICAL IMPEDANCE CONTROL FOR CARTESIAN COMMAND ++++++++++++++//
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -472,10 +472,12 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
     // tau_task << jacobian.transpose() * F_ee_des_;
 
     ROS_WARN_STREAM_THROTTLE(0.5, "Cartesian Linear Stiffness:" << cartesian_stiffness_(0,0));
+    ROS_WARN_STREAM_THROTTLE(0.5, "Cartesian Linear Damping:" << cartesian_damping_(0,0));
     ROS_WARN_STREAM_THROTTLE(0.5, "Classic Linear Control Force:" << F_ee_des_.head(3).norm());
     ROS_WARN_STREAM_THROTTLE(0.5, "Classic Angular Control Force :" << F_ee_des_.tail(3).norm());
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
   }else{
   
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -554,26 +556,22 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
 
   // nullspace PD control with damping ratio = 1
   ROS_WARN_STREAM_THROTTLE(0.5, "Nullspace stiffness:" << nullspace_stiffness_);
-  // tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
-  //                   jacobian.transpose() * jacobian_transpose_pinv) *
-  //                      (nullspace_stiffness_ * (q_d_nullspace_ - q) -
-  //                       (2.0 * sqrt(nullspace_stiffness_)) * dq);
-
 
   Eigen::VectorXd nullspace_stiffness_vec(7);
-  // My intents to figure out good gains!.. this could be learned...
-  // nullgains << 1.,60,10.,40,5.,1.,1.; // These are optimal values for KUKA IIWA
-  // double nominal_stiffness = 0.1; // This could be read from yaml file
-  // These values are what was psuedo-working in the real robot
-  nullspace_stiffness_vec <<  0.05*nullspace_stiffness_, 0.5*nullspace_stiffness_, 5*nullspace_stiffness_, 0.15*nullspace_stiffness_, 
-  0.5*nullspace_stiffness_, 0.01*nullspace_stiffness_, 0.01*nullspace_stiffness_;
+    // My intents to figure out good gains!.. this could be learned...
+    // nullgains << 1.,60,10.,40,5.,1.,1.; // These are optimal values for KUKA IIWA
+    // double nominal_stiffness = 0.1; // This could be read from yaml file
+    // These values are what was psuedo-working in the real robot
 
-  for (int i=0; i<7; i++)
-    tau_nullspace_error(i) = nullspace_stiffness_vec(i) * (q_d_nullspace_(i) - q(i));
-  tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
-                    jacobian.transpose() * jacobian_transpose_pinv) *
-                       (tau_nullspace_error - (2.0 * sqrt(nullspace_stiffness_)) * dq);
+    // NULLSPACE DURING EXECUTION
+    nullspace_stiffness_vec <<  0.05*nullspace_stiffness_, 0.01*nullspace_stiffness_, 5*nullspace_stiffness_, 0.15*nullspace_stiffness_, 
+    0.5*nullspace_stiffness_, 0.01*nullspace_stiffness_, 0.01*nullspace_stiffness_;
 
+    for (int i=0; i<7; i++)
+      tau_nullspace_error(i) = nullspace_stiffness_vec(i) * (q_d_nullspace_(i) - q(i));
+    tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
+                      jacobian.transpose() * jacobian_transpose_pinv) *
+                         (tau_nullspace_error - (2.0 * sqrt(nullspace_stiffness_)) * dq);
 
   // Compute tool compensation (scoop/camera in scooping task)
   if (activate_tool_compensation_)
@@ -582,8 +580,11 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
     tau_tool.setZero();
 
   // FINAL DESIRED CONTROL TORQUE SENT TO ROBOT
+  // TESTING
+  // tau_task.setZero();
+
   tau_d << tau_task + tau_nullspace + coriolis - tau_tool;
-  // ROS_WARN_STREAM_THROTTLE(0.5, "Desired control torque:" << tau_d.transpose());
+  ROS_WARN_STREAM_THROTTLE(0.5, "Desired control torque:" << tau_d.transpose());
 
   // Saturate torque rate to avoid discontinuities
   tau_d << saturateTorqueRate(tau_d, tau_J_d);

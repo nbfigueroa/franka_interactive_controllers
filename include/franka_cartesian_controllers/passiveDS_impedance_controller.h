@@ -159,6 +159,7 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
   std::unique_ptr<PassiveDS> passive_ds_controller;
   std::unique_ptr<PassiveDS> ang_passive_ds_controller;
   double ds_phase_;
+  bool do_cart_imp_;
 
   // Dynamic reconfigure
   std::unique_ptr<dynamic_reconfigure::Server<franka_interactive_controllers::passive_ds_paramConfig>>

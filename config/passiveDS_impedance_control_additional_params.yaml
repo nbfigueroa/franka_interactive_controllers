@@ -1,6 +1,6 @@
 # ***** Damping gains for the linear passive velocity control law ***** #
 linear_damping_eigenvalues:  [150, 150, 150] #Kuka experiments use 100!.. 150 for franka already tracks desired velocity quite well
-# linear_damping_eigenvalues:  [100, 100, 100] #Kuka experiments use 100!.. 150 for franka already tracks desired velocity quite well
+# linear_damping_eigenvalues:  [0., 0., 0.] #Kuka experiments use 100!.. 150 for franka already tracks desired velocity quite well
 angular_damping_eigenvalues: [5., 5., 5.] # If activated in Yaml file it will use this for control during DS!
 # angular_damping_eigenvalues: [2.5, 2.5, 2.5] # If activated in Yaml file it will use this for control during DS!
 
@@ -12,17 +12,25 @@ cartesian_stiffness_setpoint_ctrl: [500, 500, 500, 50, 50, 50] # Good tracking v
 # cartesian_stiffness_grav_comp: [50.0, 1.0, 1.0, 50, 50, 50] # This will switch the controller to cartesian gravity compensation when no desired velocity is read and mode=0
 
 ## FOR REAL-ROBOT
-cartesian_stiffness_grav_comp: [0., 0., 0., 50, 50, 50] # This will switch the controller to cartesian gravity compensation when no desired velocity is read and mode=0
+# cartesian_stiffness_grav_comp: [0., 0., 0., 25, 25, 25] # This will switch the controller to cartesian gravity compensation when no desired velocity is read and mode=0
+cartesian_stiffness_grav_comp: [0., 0., 0.01, 25., 25., 25.] # This will switch the controller to cartesian gravity compensation when no desired velocity is read and mode=0
+
 
 # Which mode should the execution start with?
 cartesian_stiffness_mode: 0 # Initial fallback stiffness mode 0: grav-comp, 1: setpoint-track, this can be changed by publishing to /passive_ds/stiffness_mode topic
 
 # ***** Nominal nullspace stiffness used for all joints ***** #
-# nullspace_stiffness: 0.01
-nullspace_stiffness: 0.1 #Good behavior in sim
+# nullspace_stiffness: 0.01 # TOO COMPLIANT.. ROBOT WILL GET IN WEIRD CONFIGURATION WHEN DOING GRAV COMP
+# nullspace_stiffness: 0.1 # With strong motions ROBOT WILL GET IN WEIRD CONFIGURATION WHEN DOING GRAV COMP
+nullspace_stiffness: 0.25 #Good behavior in REAL ROBOT MIT MUSEUM (This seems like the optimal stiffness)******
+# nullspace_stiffness: 0.5 #Good behavior in REAL ROBOT MIT MUSEUM (stays near nullspace while doing grav comp.. still a BIT Stiff)
+# nullspace_stiffness: 1.0 #Good behavior in REAL ROBOT MIT MUSEUM (stays near nullspace but becomes a bit stiff)
 
 # If leave commented, then will use q_initial as q_d_nullspace_
-q_nullspace: [0.0, -0.1516284550464292, 0.0, -2.1602991589328693, 0.0063609233109487425, 2.030401506252017, 0.8428664707532099]
+# q_nullspace: [0.0, -0.1516284550464292, 0.0, -2.1602991589328693, 0.0063609233109487425, 2.030401506252017, 0.8428664707532099]
+
+# AT MIT MUSEUM
+q_nullspace: [0.005264432735087578, -0.17525178575515743, 0.08762187454773385, -1.8310899806440901, 0.029428643955124744, 1.680440888034793, 0.9123517645864205]
 
 # ***** F_ext wrench to compensate for camera or tool mounted on end-effector ***** #
 external_tool_compensation: [0, 0, 0.0, 0, 0.0, 0.0] #Check F_ext

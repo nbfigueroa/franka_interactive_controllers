@@ -129,15 +129,9 @@ bool CartesianTwistImpedanceController::init(hardware_interface::RobotHW* robot_
   }
   for (int i = 0; i < 6; i ++) {
     cartesian_stiffness_target_(i,i) = cartesian_stiffness_target_yaml[i];
+    cartesian_damping_target_(i,i) = 2.0 * sqrt(cartesian_stiffness_target_yaml[i]);
   }
-  // Damping ratio = 1
-  default_cart_stiffness_target_ << 300, 300, 300, 50, 50, 50;
-  for (int i = 0; i < 6; i ++) {
-    if (cartesian_stiffness_target_yaml[i] == 0.0)
-      cartesian_damping_target_(i,i) = 2.0 * sqrt(default_cart_stiffness_target_[i]);
-    else
-      cartesian_damping_target_(i,i) = 2.0 * sqrt(cartesian_stiffness_target_yaml[i]);
-  }
+  
   ROS_INFO_STREAM("cartesian_stiffness_target_: " << std::endl <<  cartesian_stiffness_target_);
   ROS_INFO_STREAM("cartesian_damping_target_: " << std::endl <<  cartesian_damping_target_);
 
@@ -284,9 +278,12 @@ void CartesianTwistImpedanceController::update(const ros::Time& /*time*/,
   F_ee_des_ << -cartesian_stiffness_ * pose_error - cartesian_damping_ * velocity;
   tau_task << jacobian.transpose() * F_ee_des_;
 
-  ROS_WARN_STREAM_THROTTLE(0.5, "Desired Velocity Norm:" << velocity_d_.norm());
-  ROS_WARN_STREAM_THROTTLE(0.5, "Current Velocity Norm:" << velocity.head(3).norm());
-  ROS_WARN_STREAM_THROTTLE(0.5, "Classic Linear Control Force:" << F_ee_des_.head(3).norm());
+
+  ROS_WARN_STREAM_THROTTLE(0.5, "Cartesian Linear Stiffness:"     << cartesian_stiffness_(0,0));
+  ROS_WARN_STREAM_THROTTLE(0.5, "Cartesian Linear Damping:"     << cartesian_damping_(0,0));
+  ROS_WARN_STREAM_THROTTLE(0.5, "Desired Velocity Norm:"          << velocity_d_.norm());
+  ROS_WARN_STREAM_THROTTLE(0.5, "Current Velocity Norm:"          << velocity.head(3).norm());
+  ROS_WARN_STREAM_THROTTLE(0.5, "Classic Linear Control Force:"   << F_ee_des_.head(3).norm());
   ROS_WARN_STREAM_THROTTLE(0.5, "Classic Angular Control Force :" << F_ee_des_.tail(3).norm());
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
