@@ -500,6 +500,11 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
    
     // Passive DS Impedance Contoller for Linear Velocity Error
     F_linear_des_.setZero();
+    if (velocity_d_.norm()<0.0001)
+      passive_ds_controller->set_damping_eigval(0.1,0.1);
+    else
+      passive_ds_controller->set_damping_eigval(damping_eigval0_,damping_eigval1_);
+
     passive_ds_controller->update(dx_linear_msr_,dx_linear_des_);
     F_linear_des_ << passive_ds_controller->get_output(); 
     F_ee_des_.head(3) = F_linear_des_;
@@ -563,9 +568,13 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
     // double nominal_stiffness = 0.1; // This could be read from yaml file
     // These values are what was psuedo-working in the real robot
 
-    // NULLSPACE DURING EXECUTION
-    nullspace_stiffness_vec <<  0.05*nullspace_stiffness_, 0.01*nullspace_stiffness_, 5*nullspace_stiffness_, 0.15*nullspace_stiffness_, 
-    0.5*nullspace_stiffness_, 0.01*nullspace_stiffness_, 0.01*nullspace_stiffness_;
+    // NULLSPACE DURING EXECUTION (WORKING AT PENN)
+    // nullspace_stiffness_vec <<  0.05*nullspace_stiffness_, 0.5*nullspace_stiffness_, 5*nullspace_stiffness_, 0.15*nullspace_stiffness_, 
+    // 0.5*nullspace_stiffness_, 0.01*nullspace_stiffness_, 0.01*nullspace_stiffness_;
+    
+    // NULLSPACE DURING EXECUTION (WORKING AT MUSEUM)
+    nullspace_stiffness_vec <<  0.025*nullspace_stiffness_, 0.01*nullspace_stiffness_, 5*nullspace_stiffness_, 0.05*nullspace_stiffness_, 
+    0.05*nullspace_stiffness_, 0.001*nullspace_stiffness_, 0.001*nullspace_stiffness_;
 
     for (int i=0; i<7; i++)
       tau_nullspace_error(i) = nullspace_stiffness_vec(i) * (q_d_nullspace_(i) - q(i));
@@ -581,7 +590,8 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
 
   // FINAL DESIRED CONTROL TORQUE SENT TO ROBOT
   // TESTING
-  // tau_task.setZero();
+  // if (do_cart_imp_)
+    // tau_task.setZero();
 
   tau_d << tau_task + tau_nullspace + coriolis - tau_tool;
   ROS_WARN_STREAM_THROTTLE(0.5, "Desired control torque:" << tau_d.transpose());
