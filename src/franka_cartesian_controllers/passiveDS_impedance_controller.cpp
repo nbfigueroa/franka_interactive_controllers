@@ -432,15 +432,6 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   // allocate control torque variables to compute and aggregate
   Eigen::VectorXd tau_task(7), tau_nullspace(7), tau_nullspace_error(7), tau_d(7), tau_tool(7);
 
-  // if (velocity_d_.norm()<0.0001){
-  //   do_cart_imp_ = true;
-  //   ROS_WARN_STREAM_THROTTLE(0.5, "DOING CARTESIAN IMPEDANCE");  
-  // }
-  // else{
-  //   do_cart_imp_ = false;
-  //   ROS_WARN_STREAM_THROTTLE(0.5, "DOING PASSIVE DS");
-  // }
-
   // For Debugging...
   // do_cart_imp = true;
   ROS_WARN_STREAM_THROTTLE(0.5, "Desired Velocity Norm:" << velocity_d_.norm());
@@ -448,105 +439,72 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
 
   Eigen::VectorXd     F_ee_des_;
   F_ee_des_.resize(6);  
-  // if (do_cart_imp_){
-  //   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-  //   //++++++++++++++ CLASSICAL IMPEDANCE CONTROL FOR CARTESIAN COMMAND ++++++++++++++//
-  //   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-  //   Eigen::Matrix<double, 6, 1> pose_error;
-  //   pose_error.setZero();
-
-  //   // --- Pose Error  --- //     
-  //   pose_error.head(3) << position - position_d_;
-
-  //   // orientation error
-  //   if (orientation_d_.coeffs().dot(orientation.coeffs()) < 0.0) {
-  //     orientation.coeffs() << -orientation.coeffs();
-  //   }
-  //   // "difference" quaternion
-  //   Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d_);
-  //   pose_error.tail(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
-  //   // Transform to base frame
-  //   pose_error.tail(3) << -transform.linear() * pose_error.tail(3);
-
-  //   // Computing control torque from cartesian pose error from integrated velocity command
-  //   F_ee_des_ << -cartesian_stiffness_ * pose_error - cartesian_damping_ * velocity;
-  //   // tau_task << jacobian.transpose() * F_ee_des_;
-
-  //   ROS_WARN_STREAM_THROTTLE(0.5, "Cartesian Linear Stiffness:" << cartesian_stiffness_(0,0));
-  //   ROS_WARN_STREAM_THROTTLE(0.5, "Cartesian Linear Damping:" << cartesian_damping_(0,0));
-  //   ROS_WARN_STREAM_THROTTLE(0.5, "Classic Linear Control Force:" << F_ee_des_.head(3).norm());
-  //   ROS_WARN_STREAM_THROTTLE(0.5, "Classic Angular Control Force :" << F_ee_des_.tail(3).norm());
-  //   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-  //   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
-  // }else{
   
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //++++++++++++++ PASSIVE DS CONTROL FOR LINEAR CARTESIAN COMMAND +++++++++++++++//
-    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+  //++++++++++++++ PASSIVE DS CONTROL FOR LINEAR CARTESIAN COMMAND +++++++++++++++//
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    /// set desired linear velocity
-    dx_linear_des_ << velocity_d_;
+  /// set desired linear velocity
+  dx_linear_des_ << velocity_d_;
 
-    /// set measured linear velocity
-    dx_linear_msr_ << velocity.head(3);
-    dx_angular_msr_ << velocity.tail(3); 
+  /// set measured linear velocity
+  dx_linear_msr_ << velocity.head(3);
+  dx_angular_msr_ << velocity.tail(3); 
 
-    // ------------------------------------------------------------------------//
-    // ----------------- Linear Velocity Error -> Force -----------------------//
-    // ------------------------------------------------------------------------//
+  // ------------------------------------------------------------------------//
+  // ----------------- Linear Velocity Error -> Force -----------------------//
+  // ------------------------------------------------------------------------//
 
-    // MODIFY VELOCITIES FOR ACCURATE ATTRACTOR TRACKING
-    // ROS_WARN_STREAM_THROTTLE(0.5, "Linear DS Phase:" << ds_phase_);
-   
-    // Passive DS Impedance Contoller for Linear Velocity Error
-    F_linear_des_.setZero();
-    if (velocity_d_.norm()<0.00001)
-      passive_ds_controller->set_damping_eigval(0.1,0.1);
-    else
-      passive_ds_controller->set_damping_eigval(damping_eigval0_,damping_eigval1_);
+  // MODIFY VELOCITIES FOR ACCURATE ATTRACTOR TRACKING
+  // ROS_WARN_STREAM_THROTTLE(0.5, "Linear DS Phase:" << ds_phase_);
+ 
+  // Passive DS Impedance Contoller for Linear Velocity Error
+  F_linear_des_.setZero();
+  if (velocity_d_.norm()<0.00001)
+    passive_ds_controller->set_damping_eigval(0.1,0.1);
+  else
+    passive_ds_controller->set_damping_eigval(damping_eigval0_,damping_eigval1_);
 
-    passive_ds_controller->update(dx_linear_msr_,dx_linear_des_);
-    F_linear_des_ << passive_ds_controller->get_output(); 
-    F_ee_des_.head(3) = F_linear_des_;
-    
-    ROS_WARN_STREAM_THROTTLE(0.5, "Damping Eigenvalues:" << damping_eigval0_ << " " << damping_eigval1_);
-    ROS_WARN_STREAM_THROTTLE(0.5, "PassiveDS Linear Force:" << F_ee_des_.head(3).norm());
+  passive_ds_controller->update(dx_linear_msr_,dx_linear_des_);
+  F_linear_des_ << passive_ds_controller->get_output(); 
+  F_ee_des_.head(3) = F_linear_des_;
+  
+  ROS_WARN_STREAM_THROTTLE(0.5, "Damping Eigenvalues:" << damping_eigval0_ << " " << damping_eigval1_);
+  ROS_WARN_STREAM_THROTTLE(0.5, "PassiveDS Linear Force:" << F_ee_des_.head(3).norm());
 
 
-    // ------------------------------------------------------------------------//
-    // ----------------- Orientation Error -> Force ---------------------------//
-    // ------------------------------------------------------------------------//
+  // ------------------------------------------------------------------------//
+  // ----------------- Orientation Error -> Force ---------------------------//
+  // ------------------------------------------------------------------------//
 
-    //***** Using PassiveDS control law for angular velocity trackin given desired quaternion_d_ 
-    Eigen::Vector4d _ee_quat; _ee_quat.setZero();
-    _ee_quat[0] = orientation.w(); _ee_quat.segment(1,3) = orientation.vec();
-    Eigen::Vector4d _ee_des_quat; _ee_des_quat.setZero();
-    _ee_des_quat[0] = orientation_d_.w(); _ee_des_quat.segment(1,3) = orientation_d_.vec();
+  //***** Using PassiveDS control law for angular velocity trackin given desired quaternion_d_ 
+  Eigen::Vector4d _ee_quat; _ee_quat.setZero();
+  _ee_quat[0] = orientation.w(); _ee_quat.segment(1,3) = orientation.vec();
+  Eigen::Vector4d _ee_des_quat; _ee_des_quat.setZero();
+  _ee_des_quat[0] = orientation_d_.w(); _ee_des_quat.segment(1,3) = orientation_d_.vec();
 
-    // Computing desired Angular Velocity from desired "fixed" quaternion
-    Eigen::Vector4d dqd = KinematicsUtils<double>::slerpQuaternion(_ee_quat, _ee_des_quat, 0.5);    
-    Eigen::Vector4d deltaQ = dqd - _ee_quat;
-    Eigen::Vector4d qconj = _ee_quat;
-    qconj.segment(1,3) = -1 * qconj.segment(1,3);
-    Eigen::Vector4d temp_angVel = KinematicsUtils<double>::quaternionProduct(deltaQ, qconj);
-    Eigen::Vector3d tmp_angular_vel = temp_angVel.segment(1,3);
-    double maxDq(0.3), dsGain_ori (10.0);
-    if (tmp_angular_vel.norm() > maxDq)
-        tmp_angular_vel = maxDq * tmp_angular_vel.normalized();
-    double theta_gq = (-.5/(4*maxDq*maxDq)) * tmp_angular_vel.transpose() * tmp_angular_vel;
-    dx_angular_des_  = 2 * dsGain_ori*(1+std::exp(theta_gq)) * tmp_angular_vel;
+  // Computing desired Angular Velocity from desired "fixed" quaternion
+  Eigen::Vector4d dqd = KinematicsUtils<double>::slerpQuaternion(_ee_quat, _ee_des_quat, 0.5);    
+  Eigen::Vector4d deltaQ = dqd - _ee_quat;
+  Eigen::Vector4d qconj = _ee_quat;
+  qconj.segment(1,3) = -1 * qconj.segment(1,3);
+  Eigen::Vector4d temp_angVel = KinematicsUtils<double>::quaternionProduct(deltaQ, qconj);
+  Eigen::Vector3d tmp_angular_vel = temp_angVel.segment(1,3);
+  double maxDq(0.3), dsGain_ori (10.0);
+  if (tmp_angular_vel.norm() > maxDq)
+      tmp_angular_vel = maxDq * tmp_angular_vel.normalized();
+  double theta_gq = (-.5/(4*maxDq*maxDq)) * tmp_angular_vel.transpose() * tmp_angular_vel;
+  dx_angular_des_  = 2 * dsGain_ori*(1+std::exp(theta_gq)) * tmp_angular_vel;
 
-    ROS_WARN_STREAM_THROTTLE(0.5, "Desired Angular Velocity Norm:" << dx_angular_des_.norm());
-    ROS_WARN_STREAM_THROTTLE(0.5, "Current Angular Velocity Norm:" << dx_angular_msr_.norm());
+  ROS_WARN_STREAM_THROTTLE(0.5, "Desired Angular Velocity Norm:" << dx_angular_des_.norm());
+  ROS_WARN_STREAM_THROTTLE(0.5, "Current Angular Velocity Norm:" << dx_angular_msr_.norm());
 
-    // Passive DS Impedance Contoller for Angular Velocity Error
-    ang_passive_ds_controller->update(dx_angular_msr_,dx_angular_des_);
-    F_angular_des_ << ang_passive_ds_controller->get_output();
-    F_ee_des_.tail(3) = F_angular_des_; 
-    ROS_WARN_STREAM_THROTTLE(0.5, "Ang. Damping Eigenvalues:" << ang_damping_eigval0_ << " " << ang_damping_eigval1_);
-    ROS_WARN_STREAM_THROTTLE(0.5, "PassiveDS Angular Force:" << F_ee_des_.tail(3).norm());
-  // }
+  // Passive DS Impedance Contoller for Angular Velocity Error
+  ang_passive_ds_controller->update(dx_angular_msr_,dx_angular_des_);
+  F_angular_des_ << ang_passive_ds_controller->get_output();
+  F_ee_des_.tail(3) = F_angular_des_; 
+  ROS_WARN_STREAM_THROTTLE(0.5, "Ang. Damping Eigenvalues:" << ang_damping_eigval0_ << " " << ang_damping_eigval1_);
+  ROS_WARN_STREAM_THROTTLE(0.5, "PassiveDS Angular Force:" << F_ee_des_.tail(3).norm());
 
   // Convert full control wrench to torque
   tau_task << jacobian.transpose() * F_ee_des_;
@@ -564,22 +522,22 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   ROS_WARN_STREAM_THROTTLE(0.5, "Nullspace stiffness:" << nullspace_stiffness_);
 
   Eigen::VectorXd nullspace_stiffness_vec(7);
-    // My intents to figure out good gains!.. this could be learned...
-    // nullgains << 1.,60,10.,40,5.,1.,1.; // These are optimal values for KUKA IIWA
-    // double nominal_stiffness = 0.1; // This could be read from yaml file
-    // These values are what was psuedo-working in the real robot
+  // My intents to figure out good gains!.. this could be learned...
+  // nullgains << 1.,60,10.,40,5.,1.,1.; // These are optimal values for KUKA IIWA
+  // double nominal_stiffness = 0.1; // This could be read from yaml file
+  // These values are what was psuedo-working in the real robot
 
-    // NULLSPACE DURING EXECUTION (WORKING AT PENN)
-    nullspace_stiffness_vec <<  0.05*nullspace_stiffness_, 0.5*nullspace_stiffness_, 5*nullspace_stiffness_, 0.15*nullspace_stiffness_, 
-    0.5*nullspace_stiffness_, 0.01*nullspace_stiffness_, 0.01*nullspace_stiffness_;
-    
-    // NULLSPACE DURING EXECUTION (WORKING AT MUSEUM)
-    // nullspace_stiffness_vec <<  0.025*nullspace_stiffness_, 0.01*nullspace_stiffness_, 5*nullspace_stiffness_, 0.05*nullspace_stiffness_, 
-    // 0.05*nullspace_stiffness_, 0.001*nullspace_stiffness_, 0.001*nullspace_stiffness_;
+  // NULLSPACE DURING EXECUTION (WORKING AT PENN)
+  nullspace_stiffness_vec <<  0.05*nullspace_stiffness_, 0.5*nullspace_stiffness_, 5*nullspace_stiffness_, 0.15*nullspace_stiffness_, 
+  0.5*nullspace_stiffness_, 0.01*nullspace_stiffness_, 0.01*nullspace_stiffness_;
+  
+  // NULLSPACE DURING EXECUTION (WORKING AT MUSEUM)
+  // nullspace_stiffness_vec <<  0.025*nullspace_stiffness_, 0.01*nullspace_stiffness_, 5*nullspace_stiffness_, 0.05*nullspace_stiffness_, 
+  // 0.05*nullspace_stiffness_, 0.001*nullspace_stiffness_, 0.001*nullspace_stiffness_;
 
-    // NULLSPACE DURING EXECUTION (WORKING AT MUSEUM/PENN)
-    nullspace_stiffness_vec <<  0.0001*nullspace_stiffness_, 0.1*nullspace_stiffness_, 5*nullspace_stiffness_, 0.0001*nullspace_stiffness_, 
-    0.0001*nullspace_stiffness_, 0.0001*nullspace_stiffness_, 0.0001*nullspace_stiffness_;
+  // NULLSPACE DURING EXECUTION (WORKING AT MUSEUM/PENN)
+  nullspace_stiffness_vec <<  0.0001*nullspace_stiffness_, 0.1*nullspace_stiffness_, 5*nullspace_stiffness_, 0.0001*nullspace_stiffness_, 
+  0.0001*nullspace_stiffness_, 0.0001*nullspace_stiffness_, 0.0001*nullspace_stiffness_;
 
     for (int i=0; i<7; i++)
       tau_nullspace_error(i) = nullspace_stiffness_vec(i) * (q_d_nullspace_(i) - q(i));
@@ -689,3 +647,37 @@ void PassiveDSImpedanceController::changeStiffnessModeCallback(
 PLUGINLIB_EXPORT_CLASS(franka_interactive_controllers::PassiveDSImpedanceController,
                        controller_interface::ControllerBase)
 
+
+
+  // if (do_cart_imp_){
+  //   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+  //   //++++++++++++++ CLASSICAL IMPEDANCE CONTROL FOR CARTESIAN COMMAND ++++++++++++++//
+  //   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+  //   Eigen::Matrix<double, 6, 1> pose_error;
+  //   pose_error.setZero();
+
+  //   // --- Pose Error  --- //     
+  //   pose_error.head(3) << position - position_d_;
+
+  //   // orientation error
+  //   if (orientation_d_.coeffs().dot(orientation.coeffs()) < 0.0) {
+  //     orientation.coeffs() << -orientation.coeffs();
+  //   }
+  //   // "difference" quaternion
+  //   Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d_);
+  //   pose_error.tail(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
+  //   // Transform to base frame
+  //   pose_error.tail(3) << -transform.linear() * pose_error.tail(3);
+
+  //   // Computing control torque from cartesian pose error from integrated velocity command
+  //   F_ee_des_ << -cartesian_stiffness_ * pose_error - cartesian_damping_ * velocity;
+  //   // tau_task << jacobian.transpose() * F_ee_des_;
+
+  //   ROS_WARN_STREAM_THROTTLE(0.5, "Cartesian Linear Stiffness:" << cartesian_stiffness_(0,0));
+  //   ROS_WARN_STREAM_THROTTLE(0.5, "Cartesian Linear Damping:" << cartesian_damping_(0,0));
+  //   ROS_WARN_STREAM_THROTTLE(0.5, "Classic Linear Control Force:" << F_ee_des_.head(3).norm());
+  //   ROS_WARN_STREAM_THROTTLE(0.5, "Classic Angular Control Force :" << F_ee_des_.tail(3).norm());
+  //   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+  //   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
+  // }else{
