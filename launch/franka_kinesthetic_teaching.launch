@@ -32,7 +32,6 @@
 
   </group>
 
-
   <!-- Load the easy kinesthetic teaching nodes-->
   <group if="$(arg load_kinesthetic_teaching)">
     <include file="$(find easy_kinesthetic_recording)/launch/franka_record_demonstrations.launch" >

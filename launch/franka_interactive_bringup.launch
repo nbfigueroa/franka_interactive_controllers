@@ -46,12 +46,7 @@
     <node if="$(arg use_gripper_gui)" name="franka_gui_gripper_run" pkg="franka_interactive_controllers" type="franka_gui_gripper_run.py" respawn="false" output="screen"/>
 
     <!-- Bring up rviz configuration -->
-    <node  pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find mit_museum_inspection_demo)/launch/rviz/franka_description.rviz" if="$(arg bringup_rviz)"/>
-
-    <!-- Load motion policy visualization based on demo phase -->
-    <include file="$(find mit_museum_inspection_demo)/launch/visualize_inspection_policies.launch">
-      <arg name="execution_phase" value="$(arg execution_phase)"/>
-    </include>
+    <node  pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_interactive_controllers)/launch/rviz/franka_description.rviz" if="$(arg bringup_rviz)"/>
   </group>
 
 </launch>
