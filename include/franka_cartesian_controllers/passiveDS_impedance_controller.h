@@ -143,11 +143,13 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
 
   double              damping_eigval0_;
   double              damping_eigval1_;
+  double              real_damping_eigval0_;
+  double              real_damping_eigval1_;
   double              ang_damping_eigval0_;
   double              ang_damping_eigval1_;
   Eigen::Matrix<double, 6, 1> default_cart_stiffness_target_;
   bool                bVelCommand;
-  int                 cartesian_stiffness_mode_; // 0: grav-comp, 1: setpoint-track
+  int                 cartesian_stiffness_mode_; // 0: grav-comp, 1: setpoint-track (NOT USED ANYMORE)
 
   // UNUSED SHOULD CLEAN UP!
   bool                bDebug;

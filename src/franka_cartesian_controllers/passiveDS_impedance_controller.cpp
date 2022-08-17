@@ -381,7 +381,9 @@ void PassiveDSImpedanceController::starting(const ros::Time& /*time*/) {
   elapsed_time    = ros::Duration(0.0);
   last_cmd_time   = 0.0;
   vel_cmd_timeout = 0.25;
-  ds_phase_       = 100.0;
+  ds_phase_       = 100.0; // NOT USED ANYMORE
+  real_damping_eigval0_ = damping_eigval0_;
+  real_damping_eigval1_ = damping_eigval1_;
 
 }
 
@@ -454,22 +456,20 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   // ------------------------------------------------------------------------//
   // ----------------- Linear Velocity Error -> Force -----------------------//
   // ------------------------------------------------------------------------//
-
-  // MODIFY VELOCITIES FOR ACCURATE ATTRACTOR TRACKING
-  // ROS_WARN_STREAM_THROTTLE(0.5, "Linear DS Phase:" << ds_phase_);
- 
+  
   // Passive DS Impedance Contoller for Linear Velocity Error
   F_linear_des_.setZero();
-  if (velocity_d_.norm()<0.00001)
-    passive_ds_controller->set_damping_eigval(0.1,0.1);
-  else
-    passive_ds_controller->set_damping_eigval(damping_eigval0_,damping_eigval1_);
+   
+  // Reduce gains to 0 if desired velocity is not given or = 0
+  real_damping_eigval0_ = velocity_d_.norm()<0.00001 ? 0.1 : damping_eigval0_;
+  real_damping_eigval1_ = velocity_d_.norm()<0.00001 ? 0.1 : damping_eigval1_;
 
+  passive_ds_controller->set_damping_eigval(real_damping_eigval0_,real_damping_eigval1_);
   passive_ds_controller->update(dx_linear_msr_,dx_linear_des_);
   F_linear_des_ << passive_ds_controller->get_output(); 
   F_ee_des_.head(3) = F_linear_des_;
   
-  ROS_WARN_STREAM_THROTTLE(0.5, "Damping Eigenvalues:" << damping_eigval0_ << " " << damping_eigval1_);
+  ROS_WARN_STREAM_THROTTLE(0.5, "Damping Eigenvalues:" << real_damping_eigval0_ << " " << real_damping_eigval0_);
   ROS_WARN_STREAM_THROTTLE(0.5, "PassiveDS Linear Force:" << F_ee_des_.head(3).norm());
 
 
