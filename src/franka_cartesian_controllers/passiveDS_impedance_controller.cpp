@@ -92,16 +92,11 @@ bool PassiveDSImpedanceController::init(hardware_interface::RobotHW* robot_hw,
 
   // *********  Subscribers   ********* //
   sub_desired_twist_ = node_handle.subscribe(
-      "/cartesian_impedance_controller/desired_twist", 20, &PassiveDSImpedanceController::desiredTwistCallback, this,
+      "/passiveDS/desired_twist", 20, &PassiveDSImpedanceController::desiredTwistCallback, this,
       ros::TransportHints().reliable().tcpNoDelay());
 
-  sub_ds_phase_  = node_handle.subscribe(
-      "/passiveDS/ds_phase", 1000, &PassiveDSImpedanceController::dsPhaseCallback, this,
-      ros::TransportHints().reliable().tcpNoDelay());
-
-
-  sub_cart_stiffness_mode_  = node_handle.subscribe(
-      "/passiveDS/stiffness_mode", 1000, &PassiveDSImpedanceController::changeStiffnessModeCallback, this,
+  sub_desired_damping_  = node_handle.subscribe(
+      "/passiveDS/desired_damp_eigval", 1000, &PassiveDSImpedanceController::desiredDampingCallback, this,
       ros::TransportHints().reliable().tcpNoDelay());
 
   // Getting ROSParams
@@ -173,7 +168,6 @@ bool PassiveDSImpedanceController::init(hardware_interface::RobotHW* robot_hw,
   position_d_target_.setZero();
   orientation_d_target_.coeffs() << 0.0, 0.0, 0.0, 1.0;
   velocity_d_.setZero();
-  do_cart_imp_ = false;
 
   // Passive DS Variable Initializatin=on
   dx_linear_des_.resize(3);
@@ -380,10 +374,14 @@ void PassiveDSImpedanceController::starting(const ros::Time& /*time*/) {
   // To compute 0 velocities if no command has been given
   elapsed_time    = ros::Duration(0.0);
   last_cmd_time   = 0.0;
+  last_msg_time   = 0.0;
   vel_cmd_timeout = 0.25;
-  ds_phase_       = 100.0; // NOT USED ANYMORE
-  real_damping_eigval0_ = damping_eigval0_;
-  real_damping_eigval1_ = damping_eigval1_;
+
+  real_damping_eigval0_        = damping_eigval0_;
+  real_damping_eigval1_        = damping_eigval1_;
+  desired_damp_eigval_cb_      = real_damping_eigval0_;
+  desired_damp_eigval_cb_prev_ = real_damping_eigval0_;
+  new_damping_msg_             = false;
 
 }
 
@@ -426,6 +424,12 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
     velocity_d_.setZero();
   }
 
+  // Check damping message command
+  if(ros::Time::now().toSec() - last_msg_time > vel_cmd_timeout){
+    ROS_WARN_STREAM_THROTTLE(1, "No new damping message! Setting it to default values");
+    new_damping_msg_ = false;
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////              COMPUTING TASK CONTROL TORQUE           //////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -435,7 +439,6 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   Eigen::VectorXd tau_task(7), tau_nullspace(7), tau_nullspace_error(7), tau_d(7), tau_tool(7);
 
   // For Debugging...
-  // do_cart_imp = true;
   ROS_WARN_STREAM_THROTTLE(0.5, "Desired Velocity Norm:" << velocity_d_.norm());
   ROS_WARN_STREAM_THROTTLE(0.5, "Current Velocity Norm:" << velocity.head(3).norm());
 
@@ -456,13 +459,22 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   // ------------------------------------------------------------------------//
   // ----------------- Linear Velocity Error -> Force -----------------------//
   // ------------------------------------------------------------------------//
-  
+
   // Passive DS Impedance Contoller for Linear Velocity Error
   F_linear_des_.setZero();
-   
+
+  real_damping_eigval0_ = damping_eigval0_; 
+  real_damping_eigval1_ = damping_eigval1_;
+
+  // Change eigenvalues to the ones defined in the callback if given!
+  if (new_damping_msg_){
+    real_damping_eigval0_ = desired_damp_eigval_cb_; 
+    real_damping_eigval1_ = desired_damp_eigval_cb_;    
+  }
+
   // Reduce gains to 0 if desired velocity is not given or = 0
-  real_damping_eigval0_ = velocity_d_.norm()<0.00001 ? 0.1 : damping_eigval0_;
-  real_damping_eigval1_ = velocity_d_.norm()<0.00001 ? 0.1 : damping_eigval1_;
+  real_damping_eigval0_ = velocity_d_.norm()<0.00001 ? 0.1 : real_damping_eigval0_;
+  real_damping_eigval1_ = velocity_d_.norm()<0.00001 ? 0.1 : real_damping_eigval1_;
 
   passive_ds_controller->set_damping_eigval(real_damping_eigval0_,real_damping_eigval1_);
   passive_ds_controller->update(dx_linear_msr_,dx_linear_des_);
@@ -471,7 +483,7 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   
   ROS_WARN_STREAM_THROTTLE(0.5, "Damping Eigenvalues:" << real_damping_eigval0_ << " " << real_damping_eigval0_);
   ROS_WARN_STREAM_THROTTLE(0.5, "PassiveDS Linear Force:" << F_ee_des_.head(3).norm());
-
+  desired_damp_eigval_cb_prev_ = desired_damp_eigval_cb_;
 
   // ------------------------------------------------------------------------//
   // ----------------- Orientation Error -> Force ---------------------------//
@@ -522,20 +534,8 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   ROS_WARN_STREAM_THROTTLE(0.5, "Nullspace stiffness:" << nullspace_stiffness_);
 
   Eigen::VectorXd nullspace_stiffness_vec(7);
-  // My intents to figure out good gains!.. this could be learned...
-  // nullgains << 1.,60,10.,40,5.,1.,1.; // These are optimal values for KUKA IIWA
-  // double nominal_stiffness = 0.1; // This could be read from yaml file
-  // These values are what was psuedo-working in the real robot
 
-  // NULLSPACE DURING EXECUTION (WORKING AT PENN)
-  nullspace_stiffness_vec <<  0.05*nullspace_stiffness_, 0.5*nullspace_stiffness_, 5*nullspace_stiffness_, 0.15*nullspace_stiffness_, 
-  0.5*nullspace_stiffness_, 0.01*nullspace_stiffness_, 0.01*nullspace_stiffness_;
-  
-  // NULLSPACE DURING EXECUTION (WORKING AT MUSEUM)
-  // nullspace_stiffness_vec <<  0.025*nullspace_stiffness_, 0.01*nullspace_stiffness_, 5*nullspace_stiffness_, 0.05*nullspace_stiffness_, 
-  // 0.05*nullspace_stiffness_, 0.001*nullspace_stiffness_, 0.001*nullspace_stiffness_;
-
-  // NULLSPACE DURING EXECUTION (WORKING AT MUSEUM/PENN)
+  // NULLSPACE DURING EXECUTION (WORKING AT MUSEUM/PENN) <== THIS SHOULD CHANGE FOR DIFFERENT SETUPS!
   nullspace_stiffness_vec <<  0.0001*nullspace_stiffness_, 0.1*nullspace_stiffness_, 5*nullspace_stiffness_, 0.0001*nullspace_stiffness_, 
   0.0001*nullspace_stiffness_, 0.0001*nullspace_stiffness_, 0.0001*nullspace_stiffness_;
 
@@ -618,28 +618,16 @@ void PassiveDSImpedanceController::desiredTwistCallback(
 
 }
 
-void PassiveDSImpedanceController::dsPhaseCallback(
+void PassiveDSImpedanceController::desiredDampingCallback(
     const std_msgs::Float32Ptr& msg) {
+    
+    desired_damp_eigval_cb_ =  msg->data;
+    ROS_WARN_STREAM_THROTTLE(0.5, "Desired damping eigval from callback:" << desired_damp_eigval_cb_);
 
-  ds_phase_ = msg->data;
+    last_msg_time    = ros::Time::now().toSec();
+    new_damping_msg_ = true;
 }
 
-void PassiveDSImpedanceController::changeStiffnessModeCallback(
-    const std_msgs::Int32Ptr& msg) {
-
-  cartesian_stiffness_mode_ = msg->data;
-  ROS_WARN_STREAM_THROTTLE(0.5, "Stiffness Mode Change:" << cartesian_stiffness_mode_);
-
-// Set the desired stiffness for overriding cartesian impedance controller
-  for (int i = 0; i < 6; i ++){
-    // Set the initial cartesian stiffness with grav comp values!
-    if (cartesian_stiffness_mode_ == 0)
-      cartesian_stiffness_target_(i,i) = cartesian_stiffness_grav_comp_(i,i);
-    else    
-      cartesian_stiffness_target_(i,i) = cartesian_stiffness_setpoint_ctrl_(i,i);
-  }
-
-}
 
 
 }  // namespace franka_interactive_controllers
@@ -647,6 +635,15 @@ void PassiveDSImpedanceController::changeStiffnessModeCallback(
 PLUGINLIB_EXPORT_CLASS(franka_interactive_controllers::PassiveDSImpedanceController,
                        controller_interface::ControllerBase)
 
+
+
+  // NULLSPACE DURING EXECUTION (WORKING AT PENN)
+  // nullspace_stiffness_vec <<  0.05*nullspace_stiffness_, 0.5*nullspace_stiffness_, 5*nullspace_stiffness_, 0.15*nullspace_stiffness_, 
+  // 0.5*nullspace_stiffness_, 0.01*nullspace_stiffness_, 0.01*nullspace_stiffness_;
+  
+  // NULLSPACE DURING EXECUTION (WORKING AT MUSEUM)
+  // nullspace_stiffness_vec <<  0.025*nullspace_stiffness_, 0.01*nullspace_stiffness_, 5*nullspace_stiffness_, 0.05*nullspace_stiffness_, 
+  // 0.05*nullspace_stiffness_, 0.001*nullspace_stiffness_, 0.001*nullspace_stiffness_;
 
 
   // if (do_cart_imp_){

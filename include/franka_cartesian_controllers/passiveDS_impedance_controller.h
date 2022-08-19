@@ -53,6 +53,7 @@ class PassiveDS
 private:
     double eigVal0;
     double eigVal1;
+    double desired_damping;
     Eigen::Matrix3d damping_eigval = Eigen::Matrix3d::Identity();
     Eigen::Matrix3d baseMat = Eigen::Matrix3d::Identity();
 
@@ -119,6 +120,7 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
   // Timing
   ros::Duration elapsed_time;
   double last_cmd_time;
+  double last_msg_time;
   double vel_cmd_timeout;
 
   Eigen::Matrix<double, 6, 1> tool_compensation_force_;
@@ -147,21 +149,22 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
   double              real_damping_eigval1_;
   double              ang_damping_eigval0_;
   double              ang_damping_eigval1_;
-  Eigen::Matrix<double, 6, 1> default_cart_stiffness_target_;
-  bool                bVelCommand;
-  int                 cartesian_stiffness_mode_; // 0: grav-comp, 1: setpoint-track (NOT USED ANYMORE)
-
+ 
   // UNUSED SHOULD CLEAN UP!
+  bool                bVelCommand;
   bool                bDebug;
   double              smooth_val_;
   double              rot_stiffness;
   double              rot_damping;
+  Eigen::Matrix<double, 6, 1> default_cart_stiffness_target_;
+  int                 cartesian_stiffness_mode_; // 0: grav-comp, 1: setpoint-track (NOT USED ANYMORE)
 
   // Instantiate DS controller class
   std::unique_ptr<PassiveDS> passive_ds_controller;
   std::unique_ptr<PassiveDS> ang_passive_ds_controller;
-  double ds_phase_;
-  bool do_cart_imp_;
+  double                     desired_damp_eigval_cb_;
+  double                     desired_damp_eigval_cb_prev_;
+  bool                       new_damping_msg_;
 
   // Dynamic reconfigure
   std::unique_ptr<dynamic_reconfigure::Server<franka_interactive_controllers::passive_ds_paramConfig>>
@@ -174,11 +177,9 @@ class PassiveDSImpedanceController : public controller_interface::MultiInterface
 
   // Desired twist subscriber (To take in desired DS velocity)
   ros::Subscriber sub_desired_twist_;
-  ros::Subscriber sub_ds_phase_;
-  ros::Subscriber sub_cart_stiffness_mode_;
+  ros::Subscriber sub_desired_damping_;
   void desiredTwistCallback(const geometry_msgs::TwistConstPtr& msg);
-  void dsPhaseCallback(const std_msgs::Float32Ptr& msg);
-  void changeStiffnessModeCallback(const std_msgs::Int32Ptr& msg);
+  void desiredDampingCallback(const std_msgs::Float32Ptr& msg); // In case damping values want to be changed!
 
 };
 
