@@ -25,7 +25,7 @@ $ rosdep install --from-paths . --ignore-src --rosdistro <your-ros-distro>
 
 * Install some additional python dependencies
 ```
-$ sudo apt install python3-psutil python3-tkinter
+$ sudo apt install python3-psutil python3-tkinter ros-${ROS_DISTRO}-boost_sml
 ```
 
 * Finally complie
