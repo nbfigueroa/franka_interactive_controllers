@@ -503,6 +503,7 @@ void PassiveDSImpedanceController::update(const ros::Time& /*time*/,
   Eigen::Vector4d temp_angVel = KinematicsUtils<double>::quaternionProduct(deltaQ, qconj);
   Eigen::Vector3d tmp_angular_vel = temp_angVel.segment(1,3);
   double maxDq(0.3), dsGain_ori (10.0);
+  // double maxDq(0.3), dsGain_ori (5.0);
   if (tmp_angular_vel.norm() > maxDq)
       tmp_angular_vel = maxDq * tmp_angular_vel.normalized();
   double theta_gq = (-.5/(4*maxDq*maxDq)) * tmp_angular_vel.transpose() * tmp_angular_vel;
